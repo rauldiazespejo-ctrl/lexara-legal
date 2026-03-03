@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Users, Briefcase, Clock, CalendarDays,
   FileText, DollarSign, BookOpen, Scale, Settings,
-  ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch, UserCheck, Hammer
+  ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch,
+  UserCheck, Hammer, Timer, Calculator, MapPin, Library, BarChart2
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -35,9 +36,19 @@ const NAV_SECTIONS = [
     label: 'Gestión',
     items: [
       { to: '/honorarios', icon: DollarSign, label: 'Honorarios UF' },
+      { to: '/time-tracking', icon: Timer, label: 'Time Tracking' },
       { to: '/documentos', icon: FileText, label: 'Documentos' },
+      { to: '/analytics', icon: BarChart2, label: 'Analytics & BI' },
+    ],
+  },
+  {
+    label: 'Herramientas',
+    items: [
       { to: '/normativa', icon: BookOpen, label: 'Normativa' },
+      { to: '/biblioteca', icon: Library, label: 'Biblioteca Jurídica' },
       { to: '/analisis', icon: ScanSearch, label: 'Análisis de Contratos' },
+      { to: '/calculadoras', icon: Calculator, label: 'Calculadoras Legales' },
+      { to: '/tribunales', icon: MapPin, label: 'Directorio Tribunales' },
     ],
   },
 ]

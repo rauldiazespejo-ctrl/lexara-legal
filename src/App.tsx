@@ -22,6 +22,11 @@ import Documentos from './pages/Documentos'
 import Settings from './pages/Settings'
 import Abogados from './pages/Abogados'
 import EjecutivoPage from './pages/especialidades/Ejecutivo'
+import TimeTracking from './pages/TimeTracking'
+import Calculadoras from './pages/Calculadoras'
+import Tribunales from './pages/Tribunales'
+import Biblioteca from './pages/Biblioteca'
+import Analytics from './pages/Analytics'
 
 function AppShell() {
   const { user } = useAuth()
@@ -52,6 +57,11 @@ function AppShell() {
               <Route path="/ejecutivo" element={<EjecutivoPage />} />
               <Route path="/abogados" element={<Abogados />} />
               <Route path="/analisis" element={<Analysis />} />
+              <Route path="/time-tracking" element={<TimeTracking />} />
+              <Route path="/calculadoras" element={<Calculadoras />} />
+              <Route path="/tribunales" element={<Tribunales />} />
+              <Route path="/biblioteca" element={<Biblioteca />} />
+              <Route path="/analytics" element={<Analytics />} />
               <Route path="/configuracion" element={<Settings />} />
             </Routes>
           </div>

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Briefcase, Users, Clock, CalendarDays, TrendingUp, AlertTriangle, ChevronRight, DollarSign, Gavel, Scale, CheckCircle } from 'lucide-react'
+import { Briefcase, Users, Clock, CalendarDays, TrendingUp, AlertTriangle, ChevronRight, DollarSign, Gavel, Scale, CheckCircle, Timer, Calculator, MapPin, Library, BarChart2, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DASHBOARD_DATA, UF_VALOR_CLP } from '../data/appData'
 import { RISK_COLORS } from '../data/legalDatabase'
@@ -25,15 +26,51 @@ function KpiCard({ title, value, sub, icon: Icon, color, urgent }: { title: stri
   )
 }
 
+function CountdownTimer({ diasRestantes, alerta }: { diasRestantes: number; alerta: string }) {
+  const [timeStr, setTimeStr] = useState('')
+  useEffect(() => {
+    if (diasRestantes > 3) { setTimeStr(`${diasRestantes}d`); return }
+    const totalSecs = diasRestantes * 86400
+    const tick = () => {
+      const now = new Date()
+      const msToday = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000
+      const remaining = Math.max(0, totalSecs * 1000 - msToday)
+      const h = Math.floor(remaining / 3600000)
+      const m = Math.floor((remaining % 3600000) / 60000)
+      const s = Math.floor((remaining % 60000) / 1000)
+      setTimeStr(`${diasRestantes > 0 ? `${diasRestantes}d ` : ''}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [diasRestantes])
+  const color = RISK_COLORS[alerta as keyof typeof RISK_COLORS] ?? '#94a3b8'
+  return (
+    <span className="text-xs font-black font-mono tabular-nums" style={{ color }}>
+      {timeStr}
+    </span>
+  )
+}
+
+const QUICK_MODULES = [
+  { to: '/time-tracking', icon: Timer, label: 'Time Tracking', color: '#6366f1' },
+  { to: '/calculadoras', icon: Calculator, label: 'Calculadoras', color: '#10b981' },
+  { to: '/biblioteca', icon: Library, label: 'Biblioteca', color: '#8b5cf6' },
+  { to: '/tribunales', icon: MapPin, label: 'Tribunales', color: '#3b82f6' },
+  { to: '/analytics', icon: BarChart2, label: 'Analytics', color: '#f97316' },
+  { to: '/analisis', icon: Zap, label: 'Analizador IA', color: '#eab308' },
+]
+
 export default function Dashboard() {
   const d = DASHBOARD_DATA
+  const today = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-xl font-black text-white">Panel de Control</h1>
-        <p className="text-xs text-slate-500 mt-0.5">Lun 2 Mar 2026 · González & Asociados</p>
+        <p className="text-xs text-slate-500 mt-0.5 capitalize">{today}</p>
       </motion.div>
 
       {/* KPIs 2x4 grid */}
@@ -44,7 +81,25 @@ export default function Dashboard() {
         <KpiCard title="Honorarios Pend."   value={`${d.kpis.honorariosPendientesUF} UF`} sub={`$${(d.kpis.honorariosPendientesUF * UF_VALOR_CLP / 1000000).toFixed(1)}M CLP`} icon={DollarSign} color="#eab308" />
       </div>
 
-      {/* Alertas críticas */}
+      {/* Accesos rápidos módulos */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}>
+        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2">Acceso rápido</p>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {QUICK_MODULES.map(({ to, icon: Icon, label, color }) => (
+            <Link key={to} to={to}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl hover:bg-white/[0.04] transition-all group"
+              style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: `${color}15`, border: `1px solid ${color}25` }}>
+                <Icon size={14} style={{ color }} />
+              </div>
+              <span className="text-[10px] text-slate-500 group-hover:text-slate-300 text-center leading-tight">{label}</span>
+            </Link>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Alertas críticas con countdown */}
       {d.plazosUrgentes.length > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
           className="rounded-2xl overflow-hidden"
@@ -56,13 +111,13 @@ export default function Dashboard() {
           {d.plazosUrgentes.slice(0, 3).map((p, i) => (
             <Link to="/plazos" key={p.id}
               className={`flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors ${i < d.plazosUrgentes.slice(0,3).length - 1 ? 'border-b border-red-500/[0.08]' : ''}`}>
-              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: RISK_COLORS[p.alerta] }} />
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: RISK_COLORS[p.alerta as keyof typeof RISK_COLORS] }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white truncate">{p.descripcion}</p>
                 <p className="text-[10px] text-slate-500 truncate">{p.casoTitulo} · {p.articulo}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-xs font-black" style={{ color: RISK_COLORS[p.alerta] }}>{p.diasRestantes}d</p>
+                <CountdownTimer diasRestantes={p.diasRestantes} alerta={p.alerta} />
                 <p className="text-[10px] text-slate-600">{p.fatal ? 'FATAL' : 'no fatal'}</p>
               </div>
               <ChevronRight size={13} className="text-slate-700 flex-shrink-0" />

@@ -1,0 +1,141 @@
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { DollarSign, TrendingUp, Clock, CheckCircle, AlertTriangle, Download, Trash2 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { HONORARIOS, UF_VALOR_CLP, DASHBOARD_DATA } from '../data/appData'
+import type { Honorario } from '../types'
+import { useAuth } from '../context/AuthContext'
+
+const ESTADO_CONFIG = {
+  pagado:   { color: '#22c55e', bg: 'rgba(34,197,94,0.12)',   label: 'Pagado' },
+  pendiente:{ color: '#eab308', bg: 'rgba(234,179,8,0.12)',   label: 'Pendiente' },
+  vencido:  { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   label: 'Vencido' },
+  anulado:  { color: '#64748b', bg: 'rgba(100,116,139,0.12)', label: 'Anulado' },
+}
+
+export default function Honorarios() {
+  const { canDelete } = useAuth()
+  const [honorarios, setHonorarios] = useState<Honorario[]>(HONORARIOS)
+  const [filter, setFilter] = useState<'todos' | keyof typeof ESTADO_CONFIG>('todos')
+
+  const filtered = honorarios.filter(h => filter === 'todos' || h.estado === filter)
+
+  const totalPagadoUF  = honorarios.filter(h => h.estado === 'pagado').reduce((s, h) => s + h.montoUF, 0)
+  const totalPendienteUF = honorarios.filter(h => h.estado === 'pendiente' || h.estado === 'vencido').reduce((s, h) => s + h.montoUF, 0)
+  const totalVencidoUF = honorarios.filter(h => h.estado === 'vencido').reduce((s, h) => s + h.montoUF, 0)
+
+  return (
+    <div className="space-y-4">
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-black text-white">Honorarios</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Facturación en UF · Valor UF hoy: <span className="text-yellow-400 font-bold">${UF_VALOR_CLP.toLocaleString('es-CL')}</span></p>
+        </div>
+        <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)' }}>
+          <Download size={13} /><span className="hidden sm:inline">Exportar</span>
+        </button>
+      </motion.div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'Cobrado', uf: totalPagadoUF, icon: CheckCircle, color: '#22c55e' },
+          { label: 'Por cobrar', uf: totalPendienteUF, icon: Clock, color: '#eab308' },
+          { label: 'Vencido', uf: totalVencidoUF, icon: AlertTriangle, color: '#ef4444' },
+        ].map(k => (
+          <motion.div key={k.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-3 text-center relative overflow-hidden"
+            style={{ background: `${k.color}08`, border: `1px solid ${k.color}20` }}>
+            <k.icon size={14} style={{ color: k.color }} className="mx-auto mb-1" />
+            <p className="text-base font-black" style={{ color: k.color }}>{k.uf.toFixed(1)}</p>
+            <p className="text-[9px] text-slate-500 font-semibold">UF {k.label}</p>
+            <p className="text-[9px] text-slate-600">${(k.uf * UF_VALOR_CLP / 1_000_000).toFixed(1)}M</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Trend chart */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+        className="rounded-2xl p-4" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Ingresos Mensuales (UF)</p>
+        <ResponsiveContainer width="100%" height={140}>
+          <BarChart data={DASHBOARD_DATA.tendenciaIngresos} margin={{ top: 0, right: 5, left: -28, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+            <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '8px', fontSize: 11 }}
+              formatter={(v) => [`${v} UF`, '']} />
+            <Bar dataKey="uf" radius={[5, 5, 0, 0]}>
+              {DASHBOARD_DATA.tendenciaIngresos.map((_, i) => (
+                <Cell key={i} fill={i === DASHBOARD_DATA.tendenciaIngresos.length - 1 ? '#6366f1' : '#3b82f650'} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </motion.div>
+
+      {/* Filter + list */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {(['todos', 'pagado', 'pendiente', 'vencido'] as const).map(f => (
+          <button key={f} onClick={() => setFilter(f)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all capitalize ${filter === f ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+            style={filter === f ? { background: f === 'todos' ? 'rgba(29,78,216,0.25)' : `${ESTADO_CONFIG[f as keyof typeof ESTADO_CONFIG]?.color}20`, border: `1px solid ${f === 'todos' ? 'rgba(99,102,241,0.35)' : `${ESTADO_CONFIG[f as keyof typeof ESTADO_CONFIG]?.color}40`}`, color: f === 'todos' ? '#93c5fd' : ESTADO_CONFIG[f as keyof typeof ESTADO_CONFIG]?.color } : { background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            {f === 'todos' ? 'Todos' : ESTADO_CONFIG[f as keyof typeof ESTADO_CONFIG]?.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        {filtered.map((h, i) => {
+          const cfg = ESTADO_CONFIG[h.estado]
+          return (
+            <motion.div key={h.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+              className="rounded-2xl p-4 group"
+              style={{ background: 'rgba(15,23,42,0.7)', border: `1px solid ${cfg.color}20` }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-white truncate">{h.concepto}</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5 truncate">{h.clienteNombre} · {h.casoTitulo}</p>
+                  <p className="text-[10px] text-slate-600 mt-0.5">
+                    Emisión: {h.fechaEmision} · Vence: {h.fechaVencimiento}
+                    {h.fechaPago && ` · Pagado: ${h.fechaPago}`}
+                  </p>
+                </div>
+                <div className="flex items-start gap-2 flex-shrink-0">
+                  <div className="text-right">
+                    <p className="text-base font-black" style={{ color: cfg.color }}>{h.montoUF} UF</p>
+                    <p className="text-[10px] text-slate-600">${(h.montoCLP / 1_000_000).toFixed(2)}M</p>
+                  </div>
+                  {canDelete && (
+                    <button onClick={() => setHonorarios(prev => prev.filter(x => x.id !== h.id))}
+                      className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/20 mt-0.5">
+                      <Trash2 size={12} className="text-red-400" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* UF info box */}
+      <div className="rounded-2xl p-4" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)' }}>
+        <div className="flex items-center gap-2 mb-2">
+          <TrendingUp size={13} className="text-yellow-400" />
+          <p className="text-xs font-bold text-yellow-400">¿Por qué cobrar en UF?</p>
+        </div>
+        <p className="text-[11px] text-slate-400 leading-relaxed">
+          La UF se reajusta diariamente según el IPC, protegiendo los honorarios de la inflación. Los honorarios pactados en UF mantienen su valor real durante toda la duración del caso, independiente del tiempo que tome su resolución.
+        </p>
+        <p className="text-[10px] text-slate-600 mt-1">Valor UF hoy (CMF): ${UF_VALOR_CLP.toLocaleString('es-CL')} · Fuente: Comisión para el Mercado Financiero</p>
+      </div>
+    </div>
+  )
+}

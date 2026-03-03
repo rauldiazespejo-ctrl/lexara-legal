@@ -1,0 +1,236 @@
+// @ts-nocheck
+import type { ContractAnalysis, Clause, DashboardStats } from '../types'
+
+export const SAMPLE_CLAUSES: Clause[] = [
+  {
+    id: 'c1',
+    title: 'Cláusula de Terminación Unilateral',
+    content: 'El PROVEEDOR podrá poner término al presente contrato en cualquier momento y sin expresión de causa, mediante simple aviso escrito al CLIENTE con 24 horas de anticipación, sin que ello genere derecho a indemnización alguna.',
+    riskLevel: 'critical',
+    category: 'termination',
+    issues: [
+      {
+        id: 'i1',
+        type: 'unilateral_modification',
+        description: 'La terminación unilateral sin causa ni indemnización infringe el principio de equivalencia de las prestaciones y el Art. 16 LPDC.',
+        severity: 'critical',
+        articleViolated: 'Art. 16 Ley 19.496',
+        law: 'Ley de Protección al Consumidor',
+      },
+      {
+        id: 'i2',
+        type: 'abusive_clause',
+        description: 'El plazo de 24 horas es manifiestamente insuficiente y genera desequilibrio entre las partes.',
+        severity: 'high',
+        articleViolated: 'Art. 1546 CC',
+        law: 'Código Civil',
+      },
+    ],
+    remediation: 'Establecer causales objetivas de terminación para ambas partes. Fijar un plazo mínimo de 30 días de aviso previo. Incluir indemnización proporcional al tiempo de vigencia restante. Aplicar condición resolutoria bilateral conforme Art. 1489 CC.',
+    legalReferences: [
+      { id: 'lpdc-16', law: 'Ley 19.496', article: 'Art. 16', description: 'Prohíbe cláusulas de modificación o terminación a solo arbitrio de una parte.' },
+      { id: 'cc-1489', law: 'Código Civil', article: 'Art. 1489', description: 'Condición resolutoria tácita en contratos bilaterales.' },
+    ],
+  },
+  {
+    id: 'c2',
+    title: 'Limitación Total de Responsabilidad',
+    content: 'En ningún caso el PROVEEDOR será responsable por daños directos, indirectos, incidentales, especiales o consecuentes, incluyendo pérdidas de beneficios, pérdida de datos, daño emergente o lucro cesante, independientemente de la causa que los origine.',
+    riskLevel: 'critical',
+    category: 'liability',
+    issues: [
+      {
+        id: 'i3',
+        type: 'excessive_liability_exclusion',
+        description: 'La exclusión total de responsabilidad incluyendo culpa grave es nula conforme al Código Civil chileno.',
+        severity: 'critical',
+        articleViolated: 'Art. 1547 CC',
+        law: 'Código Civil',
+      },
+      {
+        id: 'i4',
+        type: 'illegal_clause',
+        description: 'No es posible excluir responsabilidad por dolo o culpa grave. Esta cláusula vulnera el orden público.',
+        severity: 'critical',
+        articleViolated: 'Art. 1465 CC',
+        law: 'Código Civil',
+      },
+    ],
+    remediation: 'Limitar la exclusión de responsabilidad únicamente a casos de culpa leve, estableciendo un tope máximo equivalente al valor del contrato. Mantener responsabilidad plena en casos de dolo o culpa grave. Incluir seguros obligatorios para riesgos relevantes.',
+    legalReferences: [
+      { id: 'cc-1547', law: 'Código Civil', article: 'Art. 1547', description: 'Culpa grave equivale a dolo. No puede eximirse de ella.' },
+    ],
+  },
+  {
+    id: 'c3',
+    title: 'Cláusula de Arbitraje',
+    content: 'Las partes acuerdan que cualquier disputa será resuelta por arbitraje. El árbitro será designado por acuerdo de las partes.',
+    riskLevel: 'high',
+    category: 'arbitration',
+    issues: [
+      {
+        id: 'i5',
+        type: 'arbitration_violation',
+        description: 'La cláusula no especifica el reglamento arbitral aplicable (CAC, CEAC u otro), ni la sede, ni el número de árbitros.',
+        severity: 'high',
+        articleViolated: 'Reglamento CAC Art. 1-5',
+        law: 'Reglamento CAC',
+      },
+      {
+        id: 'i6',
+        type: 'ambiguous_language',
+        description: 'No indica si el árbitro es de derecho, arbitrador o mixto, conforme exige el COT Art. 222.',
+        severity: 'medium',
+        articleViolated: 'Art. 222 COT',
+        law: 'Código Orgánico de Tribunales',
+      },
+    ],
+    remediation: 'Especificar: (1) Centro arbitral (CAC o CEAC), (2) Número de árbitros (1 o 3), (3) Sede del arbitraje (Santiago), (4) Tipo de árbitro (árbitro de derecho), (5) Ley aplicable (derecho chileno), (6) Idioma (español). Usar cláusula modelo del CAC.',
+    legalReferences: [
+      { id: 'cac-1', law: 'Reglamento CAC', article: 'Art. 1-5', description: 'Requisitos de la cláusula arbitral.' },
+      { id: 'laj-1', law: 'COT', article: 'Art. 222', description: 'Tipos de árbitros en Chile.' },
+    ],
+  },
+  {
+    id: 'c4',
+    title: 'Cláusula Penal',
+    content: 'El CLIENTE deberá pagar al PROVEEDOR una multa equivalente al 50% del valor total del contrato por cada día de atraso en el pago de las facturas emitidas.',
+    riskLevel: 'high',
+    category: 'penalty',
+    issues: [
+      {
+        id: 'i7',
+        type: 'disproportionate_penalty',
+        description: 'Una pena de 50% diario es manifiestamente desproporcionada y constituye "pena enorme" conforme al Art. 1544 CC.',
+        severity: 'high',
+        articleViolated: 'Art. 1535-1544 CC',
+        law: 'Código Civil',
+      },
+    ],
+    remediation: 'Ajustar la pena a un máximo del 1.5% mensual (interés corriente) o establecer intereses conforme a la Ley 18.010 sobre operaciones de crédito. La pena total no debe superar el doble de la obligación principal.',
+    legalReferences: [
+      { id: 'cc-1535', law: 'Código Civil', article: 'Art. 1535-1544', description: 'Regulación de la cláusula penal y pena enorme.' },
+    ],
+  },
+  {
+    id: 'c5',
+    title: 'Modificación Unilateral del Contrato',
+    content: 'El PROVEEDOR se reserva el derecho de modificar los precios, términos y condiciones del presente contrato, notificando al CLIENTE con 5 días de anticipación. La continuación del servicio por el CLIENTE implica su aceptación.',
+    riskLevel: 'critical',
+    category: 'general',
+    issues: [
+      {
+        id: 'i8',
+        type: 'abusive_clause',
+        description: 'La modificación unilateral con aceptación tácita vulnera el Art. 16 LPDC y el principio de intangibilidad de los contratos.',
+        severity: 'critical',
+        articleViolated: 'Art. 16 Ley 19.496; Art. 1545 CC',
+        law: 'Ley de Protección al Consumidor; Código Civil',
+      },
+    ],
+    remediation: 'Cualquier modificación debe ser bilateral y constar por escrito. Eliminar la aceptación tácita. Si se requiere flexibilidad de precios, establecer un mecanismo de reajuste indexado a IPC o indicadores acordados, con derecho a desistimiento del CLIENTE.',
+    legalReferences: [
+      { id: 'lpdc-16', law: 'Ley 19.496', article: 'Art. 16', description: 'Prohíbe modificación unilateral del contrato.' },
+      { id: 'cc-1545', law: 'Código Civil', article: 'Art. 1545', description: 'Intangibilidad del contrato.' },
+    ],
+  },
+  {
+    id: 'c6',
+    title: 'Fuerza Mayor',
+    content: 'Ninguna de las partes será responsable por el incumplimiento de sus obligaciones cuando dicho incumplimiento resulte de circunstancias fuera de su control razonable, incluyendo desastres naturales, actos gubernamentales, pandemias o conflictos laborales.',
+    riskLevel: 'low',
+    category: 'force_majeure',
+    issues: [],
+    remediation: '',
+    legalReferences: [
+      { id: 'cc-1547', law: 'Código Civil', article: 'Art. 1547', description: 'El deudor no es responsable de caso fortuito a menos que haya tomado a su cargo el caso fortuito.' },
+    ],
+  },
+  {
+    id: 'c7',
+    title: 'Confidencialidad',
+    content: 'Ambas partes se obligan a mantener absoluta confidencialidad respecto de toda información técnica, comercial o financiera compartida en virtud del presente contrato, por un plazo de 5 años desde su término.',
+    riskLevel: 'ok',
+    category: 'confidentiality',
+    issues: [],
+    remediation: '',
+    legalReferences: [],
+  },
+]
+
+export const DEMO_ANALYSIS: ContractAnalysis = {
+  id: 'demo-001',
+  fileName: 'Contrato_Suministro_TechCorp_2024.pdf',
+  fileType: 'pdf',
+  uploadDate: new Date('2024-03-01'),
+  contractType: 'commercial_supply',
+  parties: ['TechCorp Chile SpA (Proveedor)', 'Importadora Los Andes Ltda. (Cliente)'],
+  overallRisk: 78,
+  riskLevel: 'critical',
+  clauses: SAMPLE_CLAUSES,
+  summary: 'El contrato presenta múltiples cláusulas que infringen la Ley 19.496 de Protección al Consumidor y el Código Civil chileno. Se identificaron 3 cláusulas críticas que deben ser subsanadas antes de la firma. El mecanismo de terminación unilateral y la exclusión total de responsabilidad son las vulnerabilidades más graves. La cláusula arbitral requiere completarse para ser operativa.',
+  recommendations: [
+    'Reformar urgentemente la cláusula de terminación unilateral para establecer causales objetivas bilaterales',
+    'Eliminar o limitar la exclusión total de responsabilidad conforme al Art. 1547 CC',
+    'Completar la cláusula arbitral con los requisitos del Reglamento CAC o CEAC',
+    'Reducir la cláusula penal a niveles conformes con la ley (máximo interés corriente)',
+    'Eliminar la modificación unilateral del contrato y sustituir por mecanismo bilateral',
+    'Considerar incluir cláusula de mediación previa al arbitraje para conflictos menores',
+  ],
+  arbitrationCompliance: {
+    hasArbitrationClause: true,
+    compliantWithCAC: false,
+    compliantWithCEAC: false,
+    issues: [
+      'No especifica reglamento arbitral aplicable',
+      'No indica número de árbitros',
+      'No define sede del arbitraje',
+      'No especifica tipo de árbitro (derecho/arbitrador)',
+    ],
+    recommendation: 'Usar cláusula modelo CAC: "Cualquier disputa derivada del presente contrato se resolverá mediante arbitraje administrado por el Centro de Arbitraje y Mediación de Santiago, conforme a su Reglamento vigente. El tribunal estará compuesto por un árbitro de derecho. La sede del arbitraje será Santiago, Chile."',
+  },
+  chileanLawCompliance: {
+    score: 42,
+    laws: [
+      { name: 'Código Civil (Libro IV - Contratos)', compliant: false, issues: ['Art. 1545 - Intangibilidad', 'Art. 1547 - Responsabilidad', 'Art. 1544 - Pena enorme'] },
+      { name: 'Ley 19.496 - Protección al Consumidor', compliant: false, issues: ['Art. 16 - Cláusulas abusivas', 'Art. 16A - Limitación responsabilidad'] },
+      { name: 'Código de Comercio', compliant: true, issues: [] },
+      { name: 'COT - Arbitraje (Art. 222-243)', compliant: false, issues: ['Cláusula arbitral incompleta'] },
+      { name: 'Ley 18.010 - Operaciones de Crédito', compliant: false, issues: ['Tasa de interés excesiva en cláusula penal'] },
+      { name: 'Ley 20.416 - Estatuto PYME', compliant: true, issues: [] },
+    ],
+  },
+}
+
+export const DASHBOARD_STATS: DashboardStats = {
+  totalContracts: 47,
+  criticalIssues: 23,
+  contractsAnalyzed: 47,
+  avgRiskScore: 61,
+  issuesByType: [
+    { name: 'Cláusulas Abusivas', value: 18, color: '#ef4444' },
+    { name: 'Cláusulas Ilegales', value: 12, color: '#f97316' },
+    { name: 'Lenguaje Ambiguo', value: 24, color: '#eab308' },
+    { name: 'Penas Desproporcionadas', value: 9, color: '#8b5cf6' },
+    { name: 'Modificación Unilateral', value: 15, color: '#ec4899' },
+    { name: 'Arbitraje Incompleto', value: 11, color: '#06b6d4' },
+  ],
+  riskTrend: [
+    { month: 'Sep', critical: 4, high: 6, medium: 8, low: 3 },
+    { month: 'Oct', critical: 6, high: 8, medium: 5, low: 4 },
+    { month: 'Nov', critical: 3, high: 5, medium: 10, low: 6 },
+    { month: 'Dic', critical: 5, high: 7, medium: 7, low: 5 },
+    { month: 'Ene', critical: 7, high: 9, medium: 6, low: 4 },
+    { month: 'Feb', critical: 8, high: 6, medium: 9, low: 7 },
+    { month: 'Mar', critical: 6, high: 8, medium: 11, low: 8 },
+  ],
+  contractsByType: [
+    { name: 'Servicios', value: 15 },
+    { name: 'Suministro', value: 12 },
+    { name: 'Arrendamiento', value: 8 },
+    { name: 'Distribución', value: 6 },
+    { name: 'Tecnología', value: 4 },
+    { name: 'Otros', value: 2 },
+  ],
+}
+

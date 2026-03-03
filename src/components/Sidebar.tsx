@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Users, Briefcase, Clock, CalendarDays,
   FileText, DollarSign, BookOpen, Scale, Settings,
-  ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch
+  ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch, UserCheck, Hammer
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -13,6 +13,7 @@ const NAV_SECTIONS = [
     items: [
       { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
       { to: '/clientes', icon: Users, label: 'Clientes' },
+      { to: '/abogados', icon: UserCheck, label: 'Abogados' },
       { to: '/casos', icon: Briefcase, label: 'Casos' },
       { to: '/plazos', icon: Clock, label: 'Plazos Fatales', badge: 2, badgeColor: '#ef4444' },
       { to: '/agenda', icon: CalendarDays, label: 'Agenda Legal' },
@@ -27,6 +28,7 @@ const NAV_SECTIONS = [
       { to: '/familia', icon: Heart, label: 'Derecho de Familia' },
       { to: '/tributario', icon: Receipt, label: 'Derecho Tributario' },
       { to: '/comercial', icon: Building2, label: 'Derecho Comercial' },
+      { to: '/ejecutivo', icon: Hammer, label: 'Juicio Ejecutivo' },
     ],
   },
   {

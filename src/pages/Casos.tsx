@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Briefcase, Search, Plus, ChevronRight, Scale, Gavel, Heart, ShieldAlert, Receipt, Building2, Trash2, X } from 'lucide-react'
+import { Briefcase, Search, Plus, ChevronRight, Scale, Gavel, Heart, ShieldAlert, Receipt, Building2, Trash2, X, Save } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { CASOS } from '../data/appData'
+import { CASOS, CLIENTES } from '../data/appData'
 import type { Caso, Specialty } from '../types'
 import { RISK_COLORS } from '../data/legalDatabase'
 import { useAuth } from '../context/AuthContext'
@@ -17,16 +17,160 @@ const SPEC_COLORS: Record<Specialty, string> = {
   penal: '#ef4444', familia: '#ec4899', tributario: '#f97316',
   administrativo: '#06b6d4', procesal: '#eab308',
 }
-const ETAPA_COLORS: Record<string, string> = {
-  active: '#22c55e', pending: '#eab308', closed: '#64748b', suspended: '#f97316',
+
+const TRIBUNALES = [
+  '1° Juzgado Civil de Santiago', '2° Juzgado Civil de Santiago', '3° Juzgado Civil de Santiago',
+  'Juzgado de Letras del Trabajo de Santiago', 'Juzgado de Garantía de Santiago',
+  'TOP de Santiago', 'Juzgado de Familia de Santiago', 'TTA de Santiago',
+  'Corte de Apelaciones de Santiago', 'Otro',
+]
+
+function NuevaCausaModal({ onClose, onSave }: { onClose: () => void; onSave: (c: Caso) => void }) {
+  const [form, setForm] = useState({
+    titulo: '', tipo: '', especialidad: 'civil' as Specialty,
+    tribunal: '', rol: '', clienteId: '', contraparte: '',
+    abogado: 'María González R.', valorCausa: '', notas: '',
+  })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validate = () => {
+    const e: Record<string, string> = {}
+    if (!form.titulo.trim()) e.titulo = 'Requerido'
+    if (!form.tribunal.trim()) e.tribunal = 'Requerido'
+    if (!form.clienteId) e.clienteId = 'Selecciona un cliente'
+    return e
+  }
+
+  const save = () => {
+    const e = validate()
+    if (Object.keys(e).length) { setErrors(e); return }
+    const cliente = CLIENTES.find(c => c.id === form.clienteId)
+    const nueva: Caso = {
+      id: `c${Date.now()}`, rol: form.rol || `C-${Date.now().toString().slice(-4)}-2026`,
+      titulo: form.titulo, tipo: form.tipo || 'Ordinario',
+      especialidad: form.especialidad, tribunal: form.tribunal,
+      clienteId: form.clienteId, clienteNombre: cliente?.nombre ?? '',
+      contraparte: form.contraparte, abogado: form.abogado,
+      estado: 'active', etapa: 'Ingreso', fechaIngreso: new Date().toISOString().split('T')[0],
+      fechaUltimoMovimiento: new Date().toISOString().split('T')[0],
+      probabilidadExito: 50, valorCausa: parseFloat(form.valorCausa) || 0,
+      honorarios: { modalidad: 'fijo', montoUF: 0, pagado: 0, pendiente: 0 },
+      plazos: [], teoriaDelCaso: { hechos: [], derecho: [], prueba: [], estrategia: '', fortalezas: [], debilidades: [], argumentosContrarios: [], completitud: 0 },
+      historial: [{ id: 'h1', fecha: new Date().toISOString().split('T')[0], tipo: 'gestión', descripcion: 'Causa ingresada al sistema', autor: form.abogado }],
+      documentos: [], audiencias: [], notas: form.notas, alerta: 'low',
+    }
+    onSave(nueva)
+    onClose()
+  }
+
+  const inp = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
+  const cls = 'w-full px-3 py-2 rounded-xl text-xs text-slate-200 outline-none'
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md rounded-3xl overflow-hidden"
+        style={{ background: 'rgba(10,18,35,0.98)', border: '1px solid rgba(255,255,255,0.08)', maxHeight: '90vh' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)' }}>
+              <Plus size={14} className="text-white" />
+            </div>
+            <span className="text-sm font-black text-white">Nueva Causa</span>
+          </div>
+          <button onClick={onClose}><X size={15} className="text-slate-500" /></button>
+        </div>
+        <div className="overflow-y-auto p-5 space-y-3" style={{ maxHeight: 'calc(90vh - 130px)' }}>
+          <div>
+            <p className="text-[10px] text-slate-500 mb-1">Carátula / Título de la causa *</p>
+            <input value={form.titulo} onChange={e => { setForm(f => ({ ...f, titulo: e.target.value })); setErrors(x => ({ ...x, titulo: '' })) }}
+              placeholder="Ej: García c/ Pérez — Cobro de pesos" className={cls} style={inp} />
+            {errors.titulo && <p className="text-[10px] text-red-400 mt-0.5">{errors.titulo}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[10px] text-slate-500 mb-1">Especialidad</p>
+              <select value={form.especialidad} onChange={e => setForm(f => ({ ...f, especialidad: e.target.value as Specialty }))} className={cls} style={inp}>
+                {(['civil','laboral','penal','familia','tributario','comercial','administrativo','procesal'] as Specialty[]).map(s => (
+                  <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 mb-1">Tipo de procedimiento</p>
+              <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))} className={cls} style={inp}>
+                <option value="">Seleccionar...</option>
+                <option>Juicio Ordinario</option>
+                <option>Juicio Sumario</option>
+                <option>Juicio Ejecutivo</option>
+                <option>Medida Precautoria</option>
+                <option>NLPT Aplicación General</option>
+                <option>NLPT Monitorio</option>
+                <option>Tutela Laboral</option>
+                <option>Divorcio</option>
+                <option>Alimentos</option>
+                <option>Proceso Penal</option>
+                <option>Reclamación Tributaria</option>
+                <option>Arbitraje</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 mb-1">Cliente *</p>
+            <select value={form.clienteId} onChange={e => { setForm(f => ({ ...f, clienteId: e.target.value })); setErrors(x => ({ ...x, clienteId: '' })) }} className={cls} style={inp}>
+              <option value="">Seleccionar cliente...</option>
+              {CLIENTES.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+            {errors.clienteId && <p className="text-[10px] text-red-400 mt-0.5">{errors.clienteId}</p>}
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 mb-1">Tribunal *</p>
+            <select value={form.tribunal} onChange={e => { setForm(f => ({ ...f, tribunal: e.target.value })); setErrors(x => ({ ...x, tribunal: '' })) }} className={cls} style={inp}>
+              <option value="">Seleccionar tribunal...</option>
+              {TRIBUNALES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            {errors.tribunal && <p className="text-[10px] text-red-400 mt-0.5">{errors.tribunal}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[10px] text-slate-500 mb-1">ROL / RIT / RUC</p>
+              <input value={form.rol} onChange={e => setForm(f => ({ ...f, rol: e.target.value }))} placeholder="C-1234-2026" className={cls} style={inp} />
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 mb-1">Valor causa (UF)</p>
+              <input type="number" value={form.valorCausa} onChange={e => setForm(f => ({ ...f, valorCausa: e.target.value }))} placeholder="0" className={cls} style={inp} />
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 mb-1">Contraparte</p>
+            <input value={form.contraparte} onChange={e => setForm(f => ({ ...f, contraparte: e.target.value }))} placeholder="Nombre de la parte demandada" className={cls} style={inp} />
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 mb-1">Notas iniciales</p>
+            <textarea value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} rows={2} placeholder="Antecedentes, estrategia inicial..." className={`${cls} resize-none`} style={inp} />
+          </div>
+        </div>
+        <div className="px-5 pb-5 flex gap-2 border-t border-white/[0.06] pt-4">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400" style={{ background: 'rgba(255,255,255,0.04)' }}>Cancelar</button>
+          <button onClick={save} className="flex-1 py-2.5 rounded-xl text-xs font-black text-white flex items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)' }}>
+            <Save size={13} />Crear Causa
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
 }
 
 export default function Casos() {
-  const { canDelete } = useAuth()
+  const { canDelete, canCreate } = useAuth()
   const [casos, setCasos] = useState<Caso[]>(CASOS)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'todos' | Specialty>('todos')
   const [deleteTarget, setDeleteTarget] = useState<Caso | null>(null)
+  const [showNueva, setShowNueva] = useState(false)
 
   const specialties: Specialty[] = ['civil', 'laboral', 'penal', 'familia', 'tributario', 'comercial']
 
@@ -43,14 +187,19 @@ export default function Casos() {
         className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black text-white">Causas</h1>
-          <p className="text-xs text-slate-500 mt-0.5">{CASOS.filter(c => c.estado === 'active').length} causas activas</p>
+          <p className="text-xs text-slate-500 mt-0.5">{casos.filter(c => c.estado === 'active').length} causas activas · {casos.length} total</p>
         </div>
-        <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)' }}>
-          <Plus size={14} /><span className="hidden sm:inline">Nueva Causa</span>
-        </motion.button>
+        {canCreate && (
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            onClick={() => setShowNueva(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)' }}>
+            <Plus size={14} />Nueva Causa
+          </motion.button>
+        )}
       </motion.div>
+
+      {/* Filtros especialidad */}
 
       {/* Search */}
       <div className="relative">
@@ -158,6 +307,7 @@ export default function Casos() {
             </motion.div>
           </motion.div>
         )}
+        {showNueva && <NuevaCausaModal onClose={() => setShowNueva(false)} onSave={c => setCasos(prev => [c, ...prev])} />}
       </AnimatePresence>
     </div>
   )

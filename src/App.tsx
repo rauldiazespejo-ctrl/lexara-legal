@@ -20,6 +20,8 @@ import TributarioPage from './pages/especialidades/Tributario'
 import ComercialPage from './pages/especialidades/Comercial'
 import Documentos from './pages/Documentos'
 import Settings from './pages/Settings'
+import Abogados from './pages/Abogados'
+import EjecutivoPage from './pages/especialidades/Ejecutivo'
 
 function AppShell() {
   const { user } = useAuth()
@@ -47,7 +49,9 @@ function AppShell() {
               <Route path="/familia" element={<FamiliaPage />} />
               <Route path="/tributario" element={<TributarioPage />} />
               <Route path="/comercial/*" element={<ComercialPage />} />
-              <Route path="/analisis/*" element={<Analysis />} />
+              <Route path="/ejecutivo" element={<EjecutivoPage />} />
+              <Route path="/abogados" element={<Abogados />} />
+              <Route path="/analisis" element={<Analysis />} />
               <Route path="/configuracion" element={<Settings />} />
             </Routes>
           </div>

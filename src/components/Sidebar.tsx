@@ -3,8 +3,9 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Users, Briefcase, Clock, CalendarDays,
   FileText, DollarSign, BookOpen, Scale, Settings,
-  ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt
+  ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const NAV_SECTIONS = [
   {
@@ -34,6 +35,7 @@ const NAV_SECTIONS = [
       { to: '/honorarios', icon: DollarSign, label: 'Honorarios UF' },
       { to: '/documentos', icon: FileText, label: 'Documentos' },
       { to: '/normativa', icon: BookOpen, label: 'Normativa' },
+      { to: '/analisis', icon: ScanSearch, label: 'Análisis de Contratos' },
     ],
   },
 ]
@@ -82,6 +84,12 @@ function NavItem({ to, icon: Icon, label, exact, badge, badgeColor }: NavItemPro
 }
 
 export function Sidebar() {
+  const { user, isSuperAdmin } = useAuth()
+
+  const initials = user?.avatar ?? 'L'
+  const displayName = user?.nombre ?? 'LEXARA'
+  const roleLabel = isSuperAdmin ? 'Super Admin · Santiago' : `${user?.rol ?? 'Abogado'} · Santiago`
+
   return (
     <aside className="hidden lg:flex fixed left-0 top-14 bottom-0 w-60 flex-col border-r border-white/[0.06] overflow-y-auto scrollbar-thin z-40"
       style={{ background: 'rgba(6,10,22,0.98)', backdropFilter: 'blur(20px)' }}>
@@ -90,10 +98,12 @@ export function Sidebar() {
       <div className="p-3 m-3 rounded-2xl" style={{ background: 'rgba(29,78,216,0.08)', border: '1px solid rgba(29,78,216,0.15)' }}>
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)' }}>G</div>
+            style={{ background: isSuperAdmin ? 'linear-gradient(135deg,#4f46e5,#7c3aed)' : 'linear-gradient(135deg,#1d4ed8,#7c3aed)' }}>
+            {initials}
+          </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-white truncate">González & Asociados</p>
-            <p className="text-[10px] text-slate-500">Abogados — Santiago</p>
+            <p className="text-xs font-bold text-white truncate">{displayName}</p>
+            <p className="text-[10px] text-slate-500 capitalize truncate">{roleLabel}</p>
           </div>
         </div>
       </div>

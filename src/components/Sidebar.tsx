@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Briefcase, Clock, CalendarDays,
   FileText, DollarSign, BookOpen, Scale, Settings,
   ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch,
-  UserCheck, Hammer, Timer, Calculator, MapPin, Library, BarChart2
+  UserCheck, Hammer, Timer, Calculator, MapPin, Library, BarChart2, PenLine
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -47,6 +47,7 @@ const NAV_SECTIONS = [
       { to: '/normativa', icon: BookOpen, label: 'Normativa' },
       { to: '/biblioteca', icon: Library, label: 'Biblioteca Jurídica' },
       { to: '/analisis', icon: ScanSearch, label: 'Análisis de Contratos' },
+      { to: '/redactor-contratos', icon: PenLine, label: 'Redactor de Contratos' },
       { to: '/calculadoras', icon: Calculator, label: 'Calculadoras Legales' },
       { to: '/tribunales', icon: MapPin, label: 'Directorio Tribunales' },
     ],

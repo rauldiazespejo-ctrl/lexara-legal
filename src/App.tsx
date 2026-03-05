@@ -27,6 +27,7 @@ import Calculadoras from './pages/Calculadoras'
 import Tribunales from './pages/Tribunales'
 import Biblioteca from './pages/Biblioteca'
 import Analytics from './pages/Analytics'
+import ClausulasRedactor from './pages/ClausulasRedactor'
 
 function AppShell() {
   const { user } = useAuth()
@@ -62,6 +63,7 @@ function AppShell() {
               <Route path="/tribunales" element={<Tribunales />} />
               <Route path="/biblioteca" element={<Biblioteca />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/redactor-contratos" element={<ClausulasRedactor />} />
               <Route path="/configuracion" element={<Settings />} />
             </Routes>
           </div>

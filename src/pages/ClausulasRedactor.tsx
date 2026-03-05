@@ -6,13 +6,14 @@ import {
   FileText, Plus, Trash2, ChevronDown, ChevronUp, ChevronRight,
   Download, Edit3, Eye, Loader2, CheckCircle, AlertTriangle,
   BookOpen, Wand2, GripVertical, X, Save, Copy, ArrowLeft,
-  Info, Scale, Sparkles, FilePlus2, Search
+  Info, Scale, Sparkles, FilePlus2, Search, Brain
 } from 'lucide-react'
 import {
   CLAUSULAS, TIPOS_CONTRATO, CATEGORIAS_CLAUSULA,
   type ClausulaTemplate
 } from '../data/clausulaTemplates'
 import { generateDocx, downloadDocx, type ClausulaDoc, type DatosContrato } from '../utils/docxGenerator'
+import IAMejorador from './IAMejorador'
 
 // ── Tipos locales ────────────────────────────────────────────────────────────
 interface ClausulaEnDoc {
@@ -636,7 +637,7 @@ function generarPlantillaDemoRevisor(): Array<{ titulo: string; texto: string; r
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function ClausulasRedactor() {
-  const [tab, setTab] = useState<'constructor' | 'revisor' | 'documento'>('documento')
+  const [tab, setTab] = useState<'constructor' | 'revisor' | 'ia' | 'documento'>('documento')
   const [clausulas, setClausulas] = useState<ClausulaEnDoc[]>([])
   const [tipoContrato, setTipoContrato] = useState('Prestación de Servicios')
   const [parteA, setParteA] = useState('')
@@ -712,6 +713,7 @@ export default function ClausulasRedactor() {
   const TABS = [
     { key: 'constructor', label: 'Constructor', icon: Plus },
     { key: 'revisor', label: 'Revisar Archivo', icon: BookOpen },
+    { key: 'ia', label: 'Mejorar con IA', icon: Brain },
     { key: 'documento', label: `Mi Contrato (${clausulas.length})`, icon: FileText },
   ]
 
@@ -771,9 +773,15 @@ export default function ClausulasRedactor() {
           <button key={key} onClick={() => setTab(key as typeof tab)}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
             style={tab === key
-              ? { background: 'linear-gradient(135deg,rgba(79,70,229,0.3),rgba(124,58,237,0.3))', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }
+              ? key === 'ia'
+                ? { background: 'linear-gradient(135deg,rgba(109,40,217,0.35),rgba(124,58,237,0.25))', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.4)' }
+                : { background: 'linear-gradient(135deg,rgba(79,70,229,0.3),rgba(124,58,237,0.3))', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }
               : { color: '#64748b' }}>
             <Icon size={12} />{label}
+            {key === 'ia' && tab !== 'ia' && (
+              <span className="ml-0.5 text-[8px] font-black px-1.5 py-0.5 rounded-full"
+                style={{ background: 'rgba(139,92,246,0.2)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }}>NEW</span>
+            )}
           </button>
         ))}
       </div>
@@ -785,6 +793,13 @@ export default function ClausulasRedactor() {
           {tab === 'constructor' && (
             <motion.div key="constructor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <WizardClausula onAdd={addClausula} />
+            </motion.div>
+          )}
+          {tab === 'ia' && (
+            <motion.div key="ia" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <IAMejorador onImportar={(texto, titulo) => {
+                addClausula({ titulo, texto, editando: false })
+              }} />
             </motion.div>
           )}
           {tab === 'revisor' && (

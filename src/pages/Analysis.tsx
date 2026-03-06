@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, X, Loader2, AlertTriangle, CheckCircle,
   ChevronDown, ChevronUp, BookOpen, Wrench, Scale, Zap,
-  Shield, BarChart2, Copy, Download, RefreshCw, Eye, Brain
+  Shield, BarChart2, Copy, Download, RefreshCw, Eye, Brain, FileDown
 } from 'lucide-react'
+import InformeLegal from './InformeLegal'
 
 // ── Tipos internos ────────────────────────────────────────────────────────────
 interface Issue {
@@ -662,6 +663,7 @@ const STEPS_ANALISIS = [
 ]
 
 export default function Analysis() {
+  const [tabPrincipal, setTabPrincipal] = useState<'analisis' | 'informe'>('analisis')
   const [archivo, setArchivo] = useState<File | null>(null)
   const [analizando, setAnalizando] = useState(false)
   const [progreso, setProgreso] = useState(0)
@@ -730,10 +732,45 @@ export default function Analysis() {
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-2">
           <Brain size={18} className="text-indigo-400" />
-          <h1 className="text-xl font-black text-white">Analizador de Contratos</h1>
+          <h1 className="text-xl font-black text-white">Análisis Contractual</h1>
         </div>
-        <p className="text-xs text-slate-500 mt-0.5">IA jurídica · Legislación chilena · Cláusulas abusivas + soluciones</p>
+        <p className="text-xs text-slate-500 mt-0.5">IA jurídica · Legislación chilena · Cláusulas abusivas + Informe descargable Word</p>
       </motion.div>
+
+      {/* Tabs principales */}
+      <div className="flex gap-1 p-1 rounded-2xl" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <button onClick={() => setTabPrincipal('analisis')}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
+          style={tabPrincipal === 'analisis'
+            ? { background: 'linear-gradient(135deg,rgba(79,70,229,0.3),rgba(124,58,237,0.3))', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }
+            : { color: '#64748b' }}>
+          <Zap size={12} />Análisis Rápido de Cláusulas
+        </button>
+        <button onClick={() => setTabPrincipal('informe')}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
+          style={tabPrincipal === 'informe'
+            ? { background: 'linear-gradient(135deg,rgba(29,78,216,0.3),rgba(79,70,229,0.25))', color: '#93c5fd', border: '1px solid rgba(29,78,216,0.35)' }
+            : { color: '#64748b' }}>
+          <FileDown size={12} />
+          Informe Jurídico Completo
+          {tabPrincipal !== 'informe' && (
+            <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full ml-0.5"
+              style={{ background: 'rgba(29,78,216,0.2)', color: '#93c5fd', border: '1px solid rgba(29,78,216,0.3)' }}>
+              NEW
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Tab Informe Jurídico */}
+      {tabPrincipal === 'informe' && (
+        <div className="p-4 rounded-2xl" style={{ background: 'rgba(10,18,35,0.9)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <InformeLegal />
+        </div>
+      )}
+
+      {/* Tab Análisis original — solo se muestra cuando tabPrincipal === 'analisis' */}
+      {tabPrincipal === 'analisis' && (<>
 
       {/* Capacidades */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -835,6 +872,7 @@ export default function Analysis() {
           </motion.div>
         )}
       </AnimatePresence>
+      </>)}
     </div>
   )
 }

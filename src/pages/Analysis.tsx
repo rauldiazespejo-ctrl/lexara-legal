@@ -7,6 +7,7 @@ import {
   Shield, BarChart2, Copy, Download, RefreshCw, Eye, Brain, FileDown
 } from 'lucide-react'
 import InformeLegal from './InformeLegal'
+import { extractTextFromFile } from '../utils/extractText'
 
 // ── Tipos internos ────────────────────────────────────────────────────────────
 interface Issue {
@@ -388,31 +389,6 @@ function analizarTexto(texto: string, nombreArchivo: string): Resultado {
   }
 }
 
-// Análisis demo enriquecido para archivos no-TXT
-function resultadoDemo(nombreArchivo: string): Resultado {
-  const textoDemo = `
-    El PROVEEDOR podrá poner término al presente contrato en cualquier momento y sin expresión de causa, 
-    mediante simple aviso escrito al CLIENTE con 24 horas de anticipación, sin que ello genere derecho a 
-    indemnización alguna.
-    
-    En ningún caso el PROVEEDOR será responsable por daños directos, indirectos, incidentales, especiales 
-    o consecuentes, incluyendo pérdidas de beneficios, pérdida de datos, daño emergente o lucro cesante.
-    
-    El PROVEEDOR se reserva el derecho de modificar las condiciones del contrato y los precios sin previo 
-    aviso ni consentimiento del CLIENTE.
-    
-    La cláusula penal por incumplimiento será equivalente al 300% del valor total del contrato.
-    
-    Las diferencias que se susciten entre las partes serán sometidas a arbitraje, quedando excluida la 
-    jurisdicción de los tribunales ordinarios.
-    
-    La información confidencial deberá mantenerse en secreto indefinidamente, sin límite de tiempo.
-    
-    El contrato se renovará automáticamente por períodos iguales salvo aviso con 2 días de anticipación.
-  `
-  return analizarTexto(textoDemo, nombreArchivo)
-}
-
 // ── Componentes UI ────────────────────────────────────────────────────────────
 const RIESGO_CONFIG = {
   critico: { label: 'Crítico', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)' },
@@ -696,25 +672,27 @@ export default function Analysis() {
     setAnalizando(true)
     setProgreso(0)
     setPaso(0)
+    setError(null)
 
-    for (let i = 0; i < STEPS_ANALISIS.length; i++) {
-      await new Promise(r => { timerRef.current = setTimeout(r, 600 + Math.random() * 500) })
-      setPaso(i)
-      setProgreso(Math.round(((i + 1) / STEPS_ANALISIS.length) * 100))
+    try {
+      setPaso(0)
+      setProgreso(10)
+      const textoExtraido = await extractTextFromFile(archivo)
+
+      for (let i = 1; i < STEPS_ANALISIS.length; i++) {
+        await new Promise(r => { timerRef.current = setTimeout(r, 400 + Math.random() * 300) })
+        setPaso(i)
+        setProgreso(Math.round(10 + ((i) / (STEPS_ANALISIS.length - 1)) * 90))
+      }
+
+      const res = analizarTexto(textoExtraido, archivo.name)
+      setResultado(res)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al procesar el archivo.'
+      setError(msg)
+    } finally {
+      setAnalizando(false)
     }
-
-    // Leer contenido real si es TXT
-    let textoAnalizar = ''
-    if (archivo.type === 'text/plain' || archivo.name.endsWith('.txt')) {
-      textoAnalizar = await archivo.text()
-    }
-
-    const res = textoAnalizar.length > 50
-      ? analizarTexto(textoAnalizar, archivo.name)
-      : resultadoDemo(archivo.name)
-
-    setResultado(res)
-    setAnalizando(false)
   }
 
   const reset = () => {

@@ -9,6 +9,7 @@ import {
   FileDown, Star, ChevronDown, ChevronUp
 } from 'lucide-react'
 import { downloadInformeLegal, type InformeLegalData, type RiesgoInforme } from '../utils/informeLegalGenerator'
+import { extractTextFromFile } from '../utils/extractText'
 
 // ── Modelos IA ────────────────────────────────────────────────────────────────
 const MODELOS = [
@@ -173,34 +174,6 @@ function analisisDemo(texto: string): any {
       'Agregar cláusula de confidencialidad con vigencia de 3 años post término, cumpliendo estándares de la Ley 19.628 sobre Protección de la Vida Privada si se manejan datos personales.',
     ],
   }
-}
-
-// ── Extractor de texto ─────────────────────────────────────────────────────────
-async function extractText(file: File): Promise<string> {
-  const ext = file.name.split('.').pop()?.toLowerCase()
-  if (ext === 'txt') return await file.text()
-  if (ext === 'docx') {
-    const mammoth = await import('mammoth')
-    const buf = await file.arrayBuffer()
-    const result = await mammoth.extractRawText({ arrayBuffer: buf })
-    return result.value
-  }
-  if (ext === 'pdf') {
-    try {
-      const pdfjsLib = await import('pdfjs-dist')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-      const buf = await file.arrayBuffer()
-      const pdf = await pdfjsLib.getDocument({ data: buf }).promise
-      let text = ''
-      for (let i = 1; i <= Math.min(pdf.numPages, 40); i++) {
-        const page = await pdf.getPage(i)
-        const content = await page.getTextContent()
-        text += content.items.map((item: any) => item.str).join(' ') + '\n'
-      }
-      return text
-    } catch { return '' }
-  }
-  return await file.text()
 }
 
 // ── Score badge ────────────────────────────────────────────────────────────────
@@ -398,7 +371,7 @@ export default function InformeLegal() {
     if (inputMode === 'archivo' && archivo) {
       setEstado('extrayendo')
       setFase('Extrayendo texto del documento...')
-      texto = await extractText(archivo)
+      texto = await extractTextFromFile(archivo)
       if (!texto || texto.length < 40) {
         setErrorMsg('No se pudo extraer texto del archivo. Intenta con .txt o pega el texto manualmente.')
         setEstado('error'); return

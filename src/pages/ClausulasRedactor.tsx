@@ -481,7 +481,7 @@ function RevisorArchivo({ onImportar }: { onImportar: (clausulas: Omit<ClausulaE
                 {isDragActive ? 'Suelta el archivo' : 'Sube un contrato existente'}
               </p>
               <p className="text-xs text-slate-500">TXT · DOCX · máx. 10MB</p>
-              <p className="text-[10px] text-slate-600 mt-2">LEXARA lo analiza, extrae las cláusulas y sugiere mejoras</p>
+              <p className="text-[10px] text-slate-600 mt-2">NexusForge lo analiza, extrae las cláusulas y sugiere mejoras</p>
             </motion.div>
           </div>
           {archivo && (

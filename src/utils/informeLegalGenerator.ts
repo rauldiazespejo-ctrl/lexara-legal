@@ -5,7 +5,7 @@ import {
   PageNumber, TableBorders, VerticalAlign
 } from 'docx'
 
-// ── Paleta LEXARA ─────────────────────────────────────────────────────────────
+// ── Paleta NexusForge ─────────────────────────────────────────────────────────────
 const C = {
   dark:    '0f172a',
   navy:    '1e3a8a',
@@ -136,7 +136,7 @@ function divider() {
   })
 }
 
-// ── Logo LEXARA SVG → inline como texto (se renderiza como imagen describible)
+// ── Logo NexusForge SVG → inline como texto (se renderiza como imagen describible)
 // En Word usamos un bloque de encabezado estilizado con texto ya que docx no soporta SVG inline
 function logoHeaderCell() {
   return new TableCell({
@@ -156,7 +156,7 @@ function logoHeaderCell() {
         spacing: { before: 60, after: 20 },
       }),
       new Paragraph({
-        children: [run('LEXARA', { bold: true, size: 16, color: C.white, allCaps: true })],
+        children: [run('NexusForge', { bold: true, size: 16, color: C.white, allCaps: true })],
         alignment: AlignmentType.CENTER,
         spacing: { before: 0, after: 20 },
       }),
@@ -336,9 +336,9 @@ function tablaResumenEjecutivo(data: InformeLegalData) {
 // ── Generador principal ───────────────────────────────────────────────────────
 export async function generateInformeLegal(data: InformeLegalData): Promise<Blob> {
   const doc = new Document({
-    creator: 'LEXARA — Legal Intelligence Platform',
+    creator: 'NexusForge — Legal Intelligence Platform',
     title: `Análisis Jurídico — ${data.titulo}`,
-    description: `Generado por LEXARA el ${data.fecha}`,
+    description: `Generado por NexusForge el ${data.fecha}`,
     styles: {
       default: {
         document: {
@@ -363,7 +363,7 @@ export async function generateInformeLegal(data: InformeLegalData): Promise<Blob
           children: [
             new Paragraph({
               children: [
-                run('LEXARA', { bold: true, size: 8, color: C.violet }),
+                run('NexusForge', { bold: true, size: 8, color: C.violet }),
                 run('   ·   Legal Intelligence Platform   ·   ', { size: 8, color: 'cbd5e1', italics: true }),
                 run('Análisis Jurídico — Derecho Chileno', { size: 8, color: C.slate, italics: true }),
               ],
@@ -379,7 +379,7 @@ export async function generateInformeLegal(data: InformeLegalData): Promise<Blob
           children: [
             new Paragraph({
               children: [
-                run('⚖ LEXARA Legal Intelligence  ·  ', { size: 8, color: 'c7d2fe' }),
+                run('⚖ NexusForge Legal Intelligence  ·  ', { size: 8, color: 'c7d2fe' }),
                 run('Basado en Ordenamiento Jurídico Chileno  ·  ', { size: 8, color: C.slate, italics: true }),
                 run('Página ', { size: 8, color: C.slate }),
                 new TextRun({ children: [PageNumber.CURRENT], size: 16, color: C.slate, font: 'Calibri' }),
@@ -511,7 +511,7 @@ export async function generateInformeLegal(data: InformeLegalData): Promise<Blob
           spacing: { before: 320, after: 40 },
         }),
         new Paragraph({
-          children: [run('LEXARA Legal Intelligence Platform', { bold: true, size: 9, color: C.violet })],
+          children: [run('NexusForge Legal Intelligence Platform', { bold: true, size: 9, color: C.violet })],
           alignment: AlignmentType.RIGHT,
           spacing: { before: 0, after: 20 },
         }),
@@ -545,7 +545,7 @@ export async function downloadInformeLegal(data: InformeLegalData) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `LEXARA_Informe_Legal_${data.parteA.replace(/\s+/g, '_').substring(0, 20)}_${new Date().toISOString().split('T')[0]}.docx`
+  a.download = `NexusForge_Informe_Legal_${data.parteA.replace(/\s+/g, '_').substring(0, 20)}_${new Date().toISOString().split('T')[0]}.docx`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

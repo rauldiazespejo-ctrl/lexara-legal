@@ -8,35 +8,15 @@ import {
   Zap, ChevronDown
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useAppData } from '../context/AppDataContext'
 import { useState } from 'react'
 
-function LexaraLogoSidebar() {
+function NexusForgeLogoSidebar() {
   return (
-    <svg width="36" height="36" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="sbg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#1e3a8a"/>
-          <stop offset="50%" stopColor="#3730a3"/>
-          <stop offset="100%" stopColor="#5b21b6"/>
-        </linearGradient>
-        <linearGradient id="ssg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#93c5fd"/>
-          <stop offset="100%" stopColor="#c4b5fd"/>
-        </linearGradient>
-      </defs>
-      <rect width="200" height="200" rx="42" fill="url(#sbg)"/>
-      <rect x="1" y="1" width="198" height="198" rx="41" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
-      <rect x="98" y="52" width="4" height="90" rx="2" fill="url(#ssg)" opacity="0.9"/>
-      <rect x="58" y="52" width="84" height="5" rx="2.5" fill="url(#ssg)"/>
-      <line x1="72" y1="57" x2="68" y2="90" stroke="url(#ssg)" strokeWidth="2.5" strokeLinecap="round"/>
-      <line x1="128" y1="57" x2="132" y2="85" stroke="url(#ssg)" strokeWidth="2.5" strokeLinecap="round"/>
-      <ellipse cx="68" cy="97" rx="20" ry="5.5" fill="url(#ssg)" opacity="0.85"/>
-      <ellipse cx="132" cy="91" rx="20" ry="5.5" fill="url(#ssg)" opacity="0.85"/>
-      <rect x="88" y="139" width="24" height="5" rx="2.5" fill="url(#ssg)" opacity="0.7"/>
-      <rect x="76" y="144" width="48" height="5" rx="2.5" fill="url(#ssg)" opacity="0.5"/>
-      <circle cx="157" cy="43" r="6" fill="#fbbf24" opacity="0.9"/>
-      <circle cx="157" cy="43" r="3" fill="#ffffff" opacity="0.8"/>
-    </svg>
+    <div className="w-9 h-9 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
+      style={{ boxShadow: '0 2px 12px rgba(29,78,216,0.35)' }}>
+      <img src="/nexusforge-logo.jpg" alt="NexusForge" className="w-full h-full object-contain p-0.5" />
+    </div>
   )
 }
 
@@ -48,7 +28,7 @@ const NAV_SECTIONS = [
       { to: '/clientes', icon: Users, label: 'Clientes' },
       { to: '/abogados', icon: UserCheck, label: 'Abogados' },
       { to: '/casos', icon: Briefcase, label: 'Casos' },
-      { to: '/plazos', icon: Clock, label: 'Plazos Fatales', badge: 2, badgeColor: '#ef4444' },
+      { to: '/plazos', icon: Clock, label: 'Plazos Fatales' },
       { to: '/agenda', icon: CalendarDays, label: 'Agenda Legal' },
     ],
   },
@@ -131,11 +111,14 @@ function NavItem({ to, icon: Icon, label, exact, badge, badgeColor }: NavItemPro
 
 export function Sidebar() {
   const { user, isSuperAdmin } = useAuth()
+  const { plazos } = useAppData()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const location = useLocation()
 
-  const initials = user?.avatar ?? 'L'
-  const displayName = user?.nombre ?? 'LEXARA'
+  const plazosUrgentes = plazos.filter(p => p.alerta === 'critical' || p.alerta === 'high').length
+
+  const initials = user?.avatar ?? 'NF'
+  const displayName = user?.nombre ?? 'NexusForge'
   const roleLabel = isSuperAdmin ? 'Super Admin' : (user?.rol ?? 'Abogado')
 
   return (
@@ -170,7 +153,7 @@ export function Sidebar() {
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-white truncate">{displayName.split(' ')[0]}</p>
+            <p className="text-xs font-bold text-white truncate">{displayName.split(' ').slice(0, 2).join(' ')}</p>
             <p className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full inline-block capitalize"
               style={{ background: isSuperAdmin ? 'rgba(251,191,36,0.1)' : 'rgba(99,102,241,0.15)', color: isSuperAdmin ? '#fbbf24' : '#a5b4fc' }}>
               {roleLabel}
@@ -196,7 +179,10 @@ export function Sidebar() {
                     exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
                     className="overflow-hidden space-y-0.5">
                     {section.items.map(item => (
-                      <NavItem key={item.to} {...item} />
+                      <NavItem key={item.to} {...item}
+                        badge={item.to === '/plazos' && plazosUrgentes > 0 ? plazosUrgentes : undefined}
+                        badgeColor={item.to === '/plazos' ? '#ef4444' : undefined}
+                      />
                     ))}
                   </motion.div>
                 )}
@@ -216,9 +202,9 @@ export function Sidebar() {
           <span>Configuración</span>
           <ChevronRight size={11} className="ml-auto opacity-40" />
         </NavLink>
-        <div className="mt-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)' }}>
+        <div className="mt-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(29,78,216,0.05)', border: '1px solid rgba(29,78,216,0.12)' }}>
           <p className="text-[9px] text-slate-700 font-semibold leading-relaxed">
-            LEXARA v2.0 · <span className="text-indigo-600">Derecho Chileno</span><br />
+            NexusForge v2.0 · <span className="text-blue-600">Derecho Chileno</span><br />
             <span className="text-slate-800">Legal Intelligence Platform</span>
           </p>
         </div>
@@ -230,12 +216,14 @@ export function Sidebar() {
 const BOTTOM_NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Inicio', exact: true },
   { to: '/casos', icon: Briefcase, label: 'Casos' },
-  { to: '/plazos', icon: Clock, label: 'Plazos', badge: 2 },
+  { to: '/plazos', icon: Clock, label: 'Plazos' },
   { to: '/agenda', icon: CalendarDays, label: 'Agenda' },
   { to: '/clientes', icon: Users, label: 'Clientes' },
 ]
 
 export function BottomNav() {
+  const { plazos } = useAppData()
+  const plazosUrgentes = plazos.filter(p => p.alerta === 'critical' || p.alerta === 'high').length
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-1 lg:hidden"
       style={{
@@ -246,7 +234,7 @@ export function BottomNav() {
         paddingBottom: 'max(8px,env(safe-area-inset-bottom))',
         boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
       }}>
-      {BOTTOM_NAV.map(({ to, icon: Icon, label, exact, badge }) => (
+      {BOTTOM_NAV.map(({ to, icon: Icon, label, exact }) => (
         <NavLink key={to} to={to} end={exact}
           className={({ isActive }) =>
             `flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all relative ${isActive ? 'text-blue-400' : 'text-slate-600'}`
@@ -257,8 +245,8 @@ export function BottomNav() {
                 <Icon size={19} />
               </div>
               <span className="text-[9px] font-semibold">{label}</span>
-              {badge && (
-                <span className="absolute top-0 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center bg-red-500 text-white">{badge}</span>
+              {to === '/plazos' && plazosUrgentes > 0 && (
+                <span className="absolute top-0 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center bg-red-500 text-white">{plazosUrgentes}</span>
               )}
             </>
           )}

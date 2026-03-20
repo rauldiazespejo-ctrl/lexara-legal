@@ -4,33 +4,12 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useState, useEffect } from 'react'
 
-function LexaraLogo({ size = 32 }: { size?: number }) {
+function NexusForgeLogo({ size = 32 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="hbg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#1e3a8a"/>
-          <stop offset="50%" stopColor="#3730a3"/>
-          <stop offset="100%" stopColor="#5b21b6"/>
-        </linearGradient>
-        <linearGradient id="hsg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#93c5fd"/>
-          <stop offset="100%" stopColor="#c4b5fd"/>
-        </linearGradient>
-      </defs>
-      <rect width="200" height="200" rx="42" fill="url(#hbg)"/>
-      <rect x="1" y="1" width="198" height="198" rx="41" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
-      <rect x="98" y="52" width="4" height="90" rx="2" fill="url(#hsg)" opacity="0.9"/>
-      <rect x="58" y="52" width="84" height="5" rx="2.5" fill="url(#hsg)"/>
-      <line x1="72" y1="57" x2="68" y2="90" stroke="url(#hsg)" strokeWidth="2.5" strokeLinecap="round"/>
-      <line x1="128" y1="57" x2="132" y2="85" stroke="url(#hsg)" strokeWidth="2.5" strokeLinecap="round"/>
-      <ellipse cx="68" cy="97" rx="20" ry="5.5" fill="url(#hsg)" opacity="0.85"/>
-      <ellipse cx="132" cy="91" rx="20" ry="5.5" fill="url(#hsg)" opacity="0.85"/>
-      <rect x="88" y="139" width="24" height="5" rx="2.5" fill="url(#hsg)" opacity="0.7"/>
-      <rect x="76" y="144" width="48" height="5" rx="2.5" fill="url(#hsg)" opacity="0.5"/>
-      <circle cx="157" cy="43" r="6" fill="#fbbf24" opacity="0.9"/>
-      <circle cx="157" cy="43" r="3" fill="#ffffff" opacity="0.8"/>
-    </svg>
+    <div className="rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
+      style={{ width: size, height: size, boxShadow: '0 2px 12px rgba(29,78,216,0.4)' }}>
+      <img src="/nexusforge-logo.jpg" alt="NexusForge" style={{ width: size, height: size, objectFit: 'contain', padding: 2 }} />
+    </div>
   )
 }
 
@@ -68,19 +47,13 @@ export default function Header() {
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
-            className="relative">
-            <LexaraLogo size={34} />
-            <motion.div
-              animate={{ opacity: [0.4, 0.7, 0.4] }}
-              transition={{ repeat: Infinity, duration: 3 }}
-              className="absolute inset-0 rounded-xl blur-md"
-              style={{ background: 'rgba(99,102,241,0.3)' }} />
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} className="relative">
+            <NexusForgeLogo size={34} />
           </motion.div>
           <div className="flex flex-col leading-none">
             <span className="text-base font-black tracking-tight"
-              style={{ background: 'linear-gradient(95deg,#93c5fd 0%,#a78bfa 50%,#93c5fd 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200%', animation: 'shimmer 4s linear infinite' }}>
-              LEXARA
+              style={{ background: 'linear-gradient(95deg,#60a5fa 0%,#1d4ed8 50%,#60a5fa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200%', animation: 'shimmer 4s linear infinite' }}>
+              NexusForge
             </span>
             <span className="text-[8px] text-slate-600 font-semibold tracking-[0.2em] uppercase hidden sm:block">Legal Intelligence</span>
           </div>
@@ -136,7 +109,7 @@ export default function Header() {
               )}
             </div>
             <div className="hidden lg:block text-left">
-              <p className="text-[10px] font-bold text-slate-200 leading-tight">{user?.nombre?.split(' ')[0]}</p>
+              <p className="text-[10px] font-bold text-slate-200 leading-tight">{user?.nombre?.split(' ').slice(0,2).join(' ')}</p>
               <p className="text-[8px] text-slate-600 leading-tight capitalize">{isSuperAdmin ? 'Super Admin' : user?.rol}</p>
             </div>
             <ChevronDown size={11} className={`text-slate-500 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />

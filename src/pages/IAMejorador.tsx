@@ -125,7 +125,7 @@ const MODOS_MEJORA: ModoMejora[] = [
 
 // ── System prompt base ────────────────────────────────────────────────────────
 function buildSystemPrompt(modo: ModoMejora): string {
-  return `Eres LEXARA IA, un abogado especialista en derecho chileno con 20 años de experiencia en contratación civil y comercial. Tu tarea es mejorar contratos aplicando estrictamente la legislación chilena vigente.
+  return `Eres NexusForge IA, un abogado especialista en derecho chileno con 20 años de experiencia en contratación civil y comercial. Tu tarea es mejorar contratos aplicando estrictamente la legislación chilena vigente.
 
 Marco legal que debes aplicar siempre:
 - Código Civil de Chile (Arts. 1438-1809 sobre obligaciones y contratos)
@@ -303,7 +303,7 @@ function mejoraSimulada(texto: string, modo: ModoMejora): ResultadoIA {
       t = t.replace(/a su solo arbitrio/gi, 'de acuerdo a criterios objetivos previamente convenidos')
       t = t.replace(/irrevocable/gi, 'revocable con aviso previo de 30 días según Art. 1545 CC')
       t = t.replace(/sin derecho a compensación/gi, 'con derecho a compensación proporcional a las prestaciones ejecutadas')
-      return t + '\n\n[REVISADO POR LEXARA IA — Cláusulas abusivas corregidas según Art. 16 Ley 19.496 y Código Civil chileno]'
+      return t + '\n\n[REVISADO POR NexusForge IA — Cláusulas abusivas corregidas según Art. 16 Ley 19.496 y Código Civil chileno]'
     },
     tono: () => {
       let t = texto
@@ -313,9 +313,9 @@ function mejoraSimulada(texto: string, modo: ModoMejora): ResultadoIA {
       t = t.replace(/el contrato termina/gi, 'el presente instrumento se resciliará')
       t = t.replace(/pagar/gi, 'satisfacer el pago de')
       t = t.replace(/si no cumple/gi, 'en caso de incumplimiento de las obligaciones contraídas')
-      return t + '\n\n[REVISADO POR LEXARA IA — Tono profesionalizado a estándar jurídico chileno]'
+      return t + '\n\n[REVISADO POR NexusForge IA — Tono profesionalizado a estándar jurídico chileno]'
     },
-    simplificar: () => texto + '\n\n[NOTA LEXARA IA: Para una simplificación óptima, configura una API Key de OpenAI o Anthropic en el panel de configuración de IA. La simplificación manual requiere IA generativa para garantizar calidad.]',
+    simplificar: () => texto + '\n\n[NOTA NexusForge IA: Para una simplificación óptima, configura una API Key de OpenAI o Anthropic en el panel de configuración de IA. La simplificación manual requiere IA generativa para garantizar calidad.]',
     default: () => {
       let t = texto
       if (!t.toLowerCase().includes('confidencial')) {
@@ -327,7 +327,7 @@ function mejoraSimulada(texto: string, modo: ModoMejora): ResultadoIA {
       if (!t.toLowerCase().includes('arbitraje') && !t.toLowerCase().includes('jurisdicción')) {
         t += '\n\nCLÁUSULA ADICIONAL — JURISDICCIÓN. Para todos los efectos del presente contrato, las partes se someten a la jurisdicción de los Tribunales Ordinarios de Justicia de Santiago, renunciando a cualquier otro fuero.'
       }
-      return t + '\n\n[REVISADO POR LEXARA IA — Modo demostración. Configura tu API Key para mejoras con IA real.]'
+      return t + '\n\n[REVISADO POR NexusForge IA — Modo demostración. Configura tu API Key para mejoras con IA real.]'
     }
   }
 
@@ -344,7 +344,7 @@ function mejoraSimulada(texto: string, modo: ModoMejora): ResultadoIA {
   return {
     textoOriginal: texto,
     textoMejorado,
-    modelo: 'LEXARA IA (modo demostración)',
+    modelo: 'NexusForge IA (modo demostración)',
     cambios: [
       'Se corrigieron cláusulas abusivas según Ley 19.496',
       'Se agregaron cláusulas esenciales faltantes',
@@ -380,20 +380,20 @@ function ScoreRing({ score, color, label }: { score: number; color: string; labe
 // ── Panel configuración API ───────────────────────────────────────────────────
 function PanelAPIConfig({ onClose }: { onClose: () => void }) {
   const [keys, setKeys] = useState({
-    openai: localStorage.getItem('lexara_openai_key') ?? '',
-    anthropic: localStorage.getItem('lexara_anthropic_key') ?? '',
-    gemini: localStorage.getItem('lexara_gemini_key') ?? '',
+    openai: localStorage.getItem('NexusForge_openai_key') ?? '',
+    anthropic: localStorage.getItem('NexusForge_anthropic_key') ?? '',
+    gemini: localStorage.getItem('NexusForge_gemini_key') ?? '',
   })
   const [show, setShow] = useState({ openai: false, anthropic: false, gemini: false })
   const [saved, setSaved] = useState(false)
 
   const save = () => {
-    if (keys.openai) localStorage.setItem('lexara_openai_key', keys.openai)
-    else localStorage.removeItem('lexara_openai_key')
-    if (keys.anthropic) localStorage.setItem('lexara_anthropic_key', keys.anthropic)
-    else localStorage.removeItem('lexara_anthropic_key')
-    if (keys.gemini) localStorage.setItem('lexara_gemini_key', keys.gemini)
-    else localStorage.removeItem('lexara_gemini_key')
+    if (keys.openai) localStorage.setItem('NexusForge_openai_key', keys.openai)
+    else localStorage.removeItem('NexusForge_openai_key')
+    if (keys.anthropic) localStorage.setItem('NexusForge_anthropic_key', keys.anthropic)
+    else localStorage.removeItem('NexusForge_anthropic_key')
+    if (keys.gemini) localStorage.setItem('NexusForge_gemini_key', keys.gemini)
+    else localStorage.removeItem('NexusForge_gemini_key')
     setSaved(true)
     setTimeout(() => { setSaved(false); onClose() }, 1200)
   }
@@ -480,9 +480,9 @@ export default function IAMejorador({ onImportar }: { onImportar: (texto: string
   const [showConfig, setShowConfig] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
-  const tieneKeyOpenAI = !!localStorage.getItem('lexara_openai_key')
-  const tieneKeyAnthropic = !!localStorage.getItem('lexara_anthropic_key')
-  const tieneKeyGemini = !!localStorage.getItem('lexara_gemini_key')
+  const tieneKeyOpenAI = !!localStorage.getItem('NexusForge_openai_key')
+  const tieneKeyAnthropic = !!localStorage.getItem('NexusForge_anthropic_key')
+  const tieneKeyGemini = !!localStorage.getItem('NexusForge_gemini_key')
 
   const onDrop = useCallback((files: File[]) => {
     if (files[0]) { setArchivo(files[0]); setInputMode('archivo') }
@@ -520,11 +520,11 @@ export default function IAMejorador({ onImportar }: { onImportar: (texto: string
       let res: ResultadoIA
 
       if (modeloSeleccionado.id === 'claude' && tieneKeyAnthropic) {
-        res = await llamarAnthropic(textoBase, modoSeleccionado, localStorage.getItem('lexara_anthropic_key')!)
+        res = await llamarAnthropic(textoBase, modoSeleccionado, localStorage.getItem('NexusForge_anthropic_key')!)
       } else if (modeloSeleccionado.id === 'gemini' && tieneKeyGemini) {
-        res = await llamarGemini(textoBase, modoSeleccionado, localStorage.getItem('lexara_gemini_key')!)
+        res = await llamarGemini(textoBase, modoSeleccionado, localStorage.getItem('NexusForge_gemini_key')!)
       } else if ((modeloSeleccionado.id === 'gpt4o' || modeloSeleccionado.id === 'gpt4o-mini') && tieneKeyOpenAI) {
-        res = await llamarOpenAI(textoBase, modoSeleccionado, localStorage.getItem('lexara_openai_key')!, modeloSeleccionado.modelo)
+        res = await llamarOpenAI(textoBase, modoSeleccionado, localStorage.getItem('NexusForge_openai_key')!, modeloSeleccionado.modelo)
       } else {
         await new Promise(r => setTimeout(r, 2200))
         res = mejoraSimulada(textoBase, modoSeleccionado)

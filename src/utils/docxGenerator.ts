@@ -88,9 +88,9 @@ function toRomano(n: number): string {
 
 export async function generateDocx(datos: DatosContrato): Promise<Blob> {
   const doc = new Document({
-    creator: 'LEXARA — Sistema Legal Inteligente',
+    creator: 'NexusForge — Sistema Legal Inteligente',
     title: datos.tipoContrato,
-    description: `Generado por LEXARA el ${new Date().toLocaleDateString('es-CL')}`,
+    description: `Generado por NexusForge el ${new Date().toLocaleDateString('es-CL')}`,
     styles: {
       default: {
         document: {
@@ -115,7 +115,7 @@ export async function generateDocx(datos: DatosContrato): Promise<Blob> {
           children: [
             new Paragraph({
               children: [
-                textRun('LEXARA', { bold: true, size: 9, color: COLOR_INDIGO }),
+                textRun('NexusForge', { bold: true, size: 9, color: COLOR_INDIGO }),
                 textRun('   ·   Sistema Legal Inteligente   ·   Derecho Chileno', { size: 9, color: 'cbd5e1', italics: true }),
               ],
               alignment: AlignmentType.RIGHT,
@@ -134,7 +134,7 @@ export async function generateDocx(datos: DatosContrato): Promise<Blob> {
                 new TextRun({ children: [PageNumber.CURRENT], size: 18, color: '94a3b8', font: 'Calibri' }),
                 textRun(' de ', { size: 9, color: '94a3b8' }),
                 new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 18, color: '94a3b8', font: 'Calibri' }),
-                textRun(`   ·   ${datos.tipoContrato}   ·   Generado por LEXARA — ${new Date().toLocaleDateString('es-CL')}`, { size: 9, color: 'cbd5e1', italics: true }),
+                textRun(`   ·   ${datos.tipoContrato}   ·   Generado por NexusForge — ${new Date().toLocaleDateString('es-CL')}`, { size: 9, color: 'cbd5e1', italics: true }),
               ],
               alignment: AlignmentType.CENTER,
               border: { top: { style: BorderStyle.SINGLE, size: 1, color: 'e2e8f0' } },
@@ -287,7 +287,7 @@ export async function generateDocx(datos: DatosContrato): Promise<Blob> {
         new Paragraph({
           children: [
             textRun('Documento generado por ', { size: 8, color: 'cbd5e1', italics: true }),
-            textRun('LEXARA — Sistema Legal Inteligente', { size: 8, color: COLOR_INDIGO, italics: true }),
+            textRun('NexusForge — Sistema Legal Inteligente', { size: 8, color: COLOR_INDIGO, italics: true }),
             textRun(' · Derecho Chileno · Solo para uso como borrador, sujeto a revisión profesional.', { size: 8, color: 'cbd5e1', italics: true }),
           ],
           alignment: AlignmentType.CENTER,

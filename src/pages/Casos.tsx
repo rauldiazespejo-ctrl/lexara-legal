@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Briefcase, Search, Plus, ChevronRight, Scale, Gavel, Heart, ShieldAlert, Receipt, Building2, Trash2, X, Save } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { CASOS, CLIENTES } from '../data/appData'
 import type { Caso, Specialty } from '../types'
 import { RISK_COLORS } from '../data/legalDatabase'
 import { useAuth } from '../context/AuthContext'
+import { useAppData } from '../context/AppDataContext'
 
 const SPEC_ICONS: Record<Specialty, React.ElementType> = {
   civil: Scale, comercial: Building2, laboral: Gavel,
@@ -25,7 +25,7 @@ const TRIBUNALES = [
   'Corte de Apelaciones de Santiago', 'Otro',
 ]
 
-function NuevaCausaModal({ onClose, onSave }: { onClose: () => void; onSave: (c: Caso) => void }) {
+function NuevaCausaModal({ onClose, onSave, clientes }: { onClose: () => void; onSave: (c: Caso) => void; clientes: import('../types').Cliente[] }) {
   const [form, setForm] = useState({
     titulo: '', tipo: '', especialidad: 'civil' as Specialty,
     tribunal: '', rol: '', clienteId: '', contraparte: '',
@@ -44,7 +44,7 @@ function NuevaCausaModal({ onClose, onSave }: { onClose: () => void; onSave: (c:
   const save = () => {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
-    const cliente = CLIENTES.find(c => c.id === form.clienteId)
+    const cliente = clientes.find(c => c.id === form.clienteId)
     const nueva: Caso = {
       id: `c${Date.now()}`, rol: form.rol || `C-${Date.now().toString().slice(-4)}-2026`,
       titulo: form.titulo, tipo: form.tipo || 'Ordinario',
@@ -122,7 +122,7 @@ function NuevaCausaModal({ onClose, onSave }: { onClose: () => void; onSave: (c:
             <p className="text-[10px] text-slate-500 mb-1">Cliente *</p>
             <select value={form.clienteId} onChange={e => { setForm(f => ({ ...f, clienteId: e.target.value })); setErrors(x => ({ ...x, clienteId: '' })) }} className={cls} style={inp}>
               <option value="">Seleccionar cliente...</option>
-              {CLIENTES.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
             {errors.clienteId && <p className="text-[10px] text-red-400 mt-0.5">{errors.clienteId}</p>}
           </div>
@@ -166,7 +166,7 @@ function NuevaCausaModal({ onClose, onSave }: { onClose: () => void; onSave: (c:
 
 export default function Casos() {
   const { canDelete, canCreate } = useAuth()
-  const [casos, setCasos] = useState<Caso[]>(CASOS)
+  const { casos, addCaso, deleteCaso, clientes } = useAppData()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'todos' | Specialty>('todos')
   const [deleteTarget, setDeleteTarget] = useState<Caso | null>(null)
@@ -301,13 +301,13 @@ export default function Casos() {
               <div className="flex gap-2">
                 <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400"
                   style={{ background: 'rgba(255,255,255,0.05)' }}>Cancelar</button>
-                <button onClick={() => { setCasos(prev => prev.filter(c => c.id !== deleteTarget.id)); setDeleteTarget(null) }}
+                <button onClick={() => { deleteCaso(deleteTarget.id); setDeleteTarget(null) }}
                   className="flex-1 py-2 rounded-xl text-xs font-black text-white" style={{ background: 'rgba(239,68,68,0.7)' }}>Eliminar</button>
               </div>
             </motion.div>
           </motion.div>
         )}
-        {showNueva && <NuevaCausaModal onClose={() => setShowNueva(false)} onSave={c => setCasos(prev => [c, ...prev])} />}
+        {showNueva && <NuevaCausaModal onClose={() => setShowNueva(false)} onSave={c => addCaso(c)} clientes={clientes} />}
       </AnimatePresence>
     </div>
   )

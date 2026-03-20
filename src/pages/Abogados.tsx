@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Plus, Search, Mail, Phone, Briefcase, Trash2, Edit2, X, Save, Shield, Star } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useAppData } from '../context/AppDataContext'
 
 export interface Abogado {
   id: string
@@ -18,11 +19,7 @@ export interface Abogado {
   activo: boolean
 }
 
-const ABOGADOS_INIT: Abogado[] = [
-  { id: 'a1', nombre: 'Raúl Díaz Espejo', rut: '15.234.567-K', email: 'rauldiazespejo@gmail.com', telefono: '+56 9 9876 5432', especialidades: ['Comercial', 'Civil', 'Tributario'], rol: 'socio', colegio: 'Colegio de Abogados de Chile', numeroColegio: '45.231', casosActivos: 8, avatar: 'RD', activo: true },
-  { id: 'a2', nombre: 'María González R.', rut: '12.987.654-3', email: 'mgonzalez@lexara.cl', telefono: '+56 9 8765 4321', especialidades: ['Civil', 'Familia'], rol: 'socio', colegio: 'Colegio de Abogados de Chile', numeroColegio: '38.100', casosActivos: 12, avatar: 'MG', activo: true },
-  { id: 'a3', nombre: 'Andrés Muñoz', rut: '18.456.789-2', email: 'amunoz@lexara.cl', telefono: '+56 9 7654 3210', especialidades: ['Laboral', 'Penal'], rol: 'asociado', colegio: 'Colegio de Abogados de Chile', numeroColegio: '52.445', casosActivos: 6, avatar: 'AM', activo: true },
-]
+const ABOGADOS_INIT: Abogado[] = []
 
 const ROL_CONFIG = {
   socio: { label: 'Socio', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
@@ -130,7 +127,7 @@ function AbogadoModal({ abogado, onClose, onSave }: { abogado?: Abogado; onClose
 
 export default function Abogados() {
   const { canDelete, isSuperAdmin } = useAuth()
-  const [abogados, setAbogados] = useState<Abogado[]>(ABOGADOS_INIT)
+  const { abogados, addAbogado, updateAbogado, deleteAbogado } = useAppData()
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Abogado | undefined>()
@@ -138,7 +135,13 @@ export default function Abogados() {
 
   const filtered = abogados.filter(a => !search || a.nombre.toLowerCase().includes(search.toLowerCase()) || a.email.toLowerCase().includes(search.toLowerCase()))
 
-  const save = (a: Abogado) => setAbogados(prev => prev.some(x => x.id === a.id) ? prev.map(x => x.id === a.id ? a : x) : [a, ...prev])
+  const save = (a: Abogado) => {
+    if (abogados.some(x => x.id === a.id)) {
+      updateAbogado(a)
+    } else {
+      addAbogado(a)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -234,7 +237,7 @@ export default function Abogados() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400" style={{ background: 'rgba(255,255,255,0.05)' }}>Cancelar</button>
-                <button onClick={() => { setAbogados(p => p.filter(a => a.id !== deleteTarget.id)); setDeleteTarget(null) }}
+                <button onClick={() => { deleteAbogado(deleteTarget.id); setDeleteTarget(null) }}
                   className="flex-1 py-2 rounded-xl text-xs font-black text-white" style={{ background: 'rgba(239,68,68,0.7)' }}>Eliminar</button>
               </div>
             </motion.div>

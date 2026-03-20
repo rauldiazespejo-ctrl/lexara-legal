@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Briefcase, Users, Clock, CalendarDays, TrendingUp, AlertTriangle, ChevronRight, DollarSign, Gavel, Scale, CheckCircle, Timer, Calculator, MapPin, Library, BarChart2, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { DASHBOARD_DATA, UF_VALOR_CLP } from '../data/appData'
+import { UF_VALOR_CLP } from '../data/appData'
 import { RISK_COLORS } from '../data/legalDatabase'
+import { useAppData } from '../context/AppDataContext'
 
 function KpiCard({ title, value, sub, icon: Icon, color, urgent }: { title: string; value: string | number; sub?: string; icon: React.ElementType; color: string; urgent?: boolean }) {
   return (
@@ -62,8 +63,33 @@ const QUICK_MODULES = [
 ]
 
 export default function Dashboard() {
-  const d = DASHBOARD_DATA
+  const { casos, clientes, honorarios, plazos, eventos } = useAppData()
   const today = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
+  const kpis = useMemo(() => {
+    const now = new Date()
+    const mesActual = now.getMonth()
+    const anioActual = now.getFullYear()
+    const casosActivos = casos.filter(c => c.estado === 'active').length
+    const casosNuevosMes = casos.filter(c => {
+      const f = new Date(c.fechaIngreso)
+      return f.getMonth() === mesActual && f.getFullYear() === anioActual
+    }).length
+    const clientesActivos = clientes.filter(c => c.estado === 'activo').length
+    const plazosUrgentes = plazos.filter(p => p.alerta === 'critical' || p.alerta === 'high')
+    const plazosVencidos = plazos.filter(p => p.diasRestantes < 0).length
+    const honorariosPendientes = honorarios.filter(h => h.estado === 'pendiente' || h.estado === 'vencido')
+    const honorariosPendientesUF = honorariosPendientes.reduce((sum, h) => sum + (h.montoUF || 0), 0)
+    const audienciasHoy = eventos.filter(e => e.tipo === 'audiencia' && e.fecha === now.toISOString().split('T')[0])
+    const probExito = casos.length > 0
+      ? Math.round(casos.reduce((s, c) => s + (c.probabilidadExito || 0), 0) / casos.length)
+      : 0
+    const distribucion: Record<string, number> = {}
+    casos.forEach(c => { distribucion[c.especialidad] = (distribucion[c.especialidad] || 0) + 1 })
+    const SPEC_COLORS: Record<string, string> = { civil: '#3b82f6', laboral: '#22c55e', comercial: '#8b5cf6', familia: '#ec4899', penal: '#ef4444', tributario: '#f97316', administrativo: '#06b6d4', arbitraje: '#eab308' }
+    const distribucionEspecialidades = Object.entries(distribucion).map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value, color: SPEC_COLORS[name] || '#6366f1' }))
+    return { casosActivos, casosNuevosMes, clientesActivos, plazosUrgentes, plazosVencidos, honorariosPendientesUF: Math.round(honorariosPendientesUF * 10) / 10, audienciasHoy, probExito, distribucionEspecialidades }
+  }, [casos, clientes, honorarios, plazos, eventos])
 
   return (
     <div className="space-y-4">
@@ -75,10 +101,10 @@ export default function Dashboard() {
 
       {/* KPIs 2x4 grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard title="Casos Activos"      value={d.kpis.casosActivos}     sub={`+${d.kpis.casosNuevosMes} este mes`} icon={Briefcase}    color="#3b82f6" />
-        <KpiCard title="Clientes"           value={d.kpis.clientesActivos}  sub="activos en despacho"                  icon={Users}        color="#8b5cf6" />
-        <KpiCard title="Plazos Urgentes"    value={d.kpis.plazosProximos}   sub={`${d.kpis.plazosVencidos} vencido`}   icon={Clock}        color="#ef4444" urgent />
-        <KpiCard title="Honorarios Pend."   value={`${d.kpis.honorariosPendientesUF} UF`} sub={`$${(d.kpis.honorariosPendientesUF * UF_VALOR_CLP / 1000000).toFixed(1)}M CLP`} icon={DollarSign} color="#eab308" />
+        <KpiCard title="Casos Activos"      value={kpis.casosActivos}     sub={`+${kpis.casosNuevosMes} este mes`} icon={Briefcase}    color="#3b82f6" />
+        <KpiCard title="Clientes"           value={kpis.clientesActivos}  sub="activos en despacho"                  icon={Users}        color="#8b5cf6" />
+        <KpiCard title="Plazos Urgentes"    value={kpis.plazosUrgentes.length}   sub={`${kpis.plazosVencidos} vencido`}   icon={Clock}        color="#ef4444" urgent />
+        <KpiCard title="Honorarios Pend."   value={`${kpis.honorariosPendientesUF} UF`} sub={`$${(kpis.honorariosPendientesUF * UF_VALOR_CLP / 1000000).toFixed(1)}M CLP`} icon={DollarSign} color="#eab308" />
       </div>
 
       {/* Accesos rápidos módulos */}
@@ -100,7 +126,7 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Alertas críticas con countdown */}
-      {d.plazosUrgentes.length > 0 && (
+      {kpis.plazosUrgentes.length > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
           className="rounded-2xl overflow-hidden"
           style={{ border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}>
@@ -108,9 +134,9 @@ export default function Dashboard() {
             <AlertTriangle size={14} className="text-red-400" />
             <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Alertas Críticas de Plazos</span>
           </div>
-          {d.plazosUrgentes.slice(0, 3).map((p, i) => (
+          {kpis.plazosUrgentes.slice(0, 3).map((p, i) => (
             <Link to="/plazos" key={p.id}
-              className={`flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors ${i < d.plazosUrgentes.slice(0,3).length - 1 ? 'border-b border-red-500/[0.08]' : ''}`}>
+              className={`flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors ${i < Math.min(kpis.plazosUrgentes.length, 3) - 1 ? 'border-b border-red-500/[0.08]' : ''}`}>
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: RISK_COLORS[p.alerta as keyof typeof RISK_COLORS] }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white truncate">{p.descripcion}</p>
@@ -137,13 +163,13 @@ export default function Dashboard() {
           </div>
           <Link to="/agenda" className="text-[10px] text-blue-400 hover:text-blue-300">Ver todo</Link>
         </div>
-        {d.audienciasHoy.length === 0 ? (
+        {kpis.audienciasHoy.length === 0 ? (
           <div className="px-4 py-4 text-xs text-slate-600 flex items-center gap-2">
             <CheckCircle size={13} className="text-green-500" />
             Sin audiencias programadas para hoy
           </div>
-        ) : d.audienciasHoy.map((ev, i) => (
-          <div key={ev.id} className={`px-4 py-3 flex items-center gap-3 ${i < d.audienciasHoy.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
+        ) : kpis.audienciasHoy.map((ev, i) => (
+          <div key={ev.id} className={`px-4 py-3 flex items-center gap-3 ${i < kpis.audienciasHoy.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
             <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)' }}>
               <Gavel size={14} className="text-blue-400" />
@@ -162,7 +188,7 @@ export default function Dashboard() {
           className="rounded-2xl p-4" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Ingresos (UF)</p>
           <ResponsiveContainer width="100%" height={150}>
-            <AreaChart data={d.tendenciaIngresos} margin={{ top: 0, right: 5, left: -28, bottom: 0 }}>
+            <AreaChart data={honorarios.filter(h=>h.estado==='pagado').reduce((acc:{mes:string;uf:number}[],h)=>{const mes=new Date(h.fechaPago||h.fechaEmision).toLocaleDateString('es-CL',{month:'short'});const ex=acc.find(a=>a.mes===mes);if(ex)ex.uf+=h.montoUF||0;else acc.push({mes,uf:Math.round(h.montoUF||0)});return acc},[])} margin={{ top: 0, right: 5, left: -28, bottom: 0 }}>
               <defs>
                 <linearGradient id="ufGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.3} />
@@ -184,13 +210,13 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <ResponsiveContainer width={110} height={110}>
               <PieChart>
-                <Pie data={d.distribucionEspecialidades} cx="50%" cy="50%" innerRadius={32} outerRadius={50} dataKey="value" paddingAngle={3}>
-                  {d.distribucionEspecialidades.map((e, i) => <Cell key={i} fill={e.color} />)}
+                <Pie data={kpis.distribucionEspecialidades} cx="50%" cy="50%" innerRadius={32} outerRadius={50} dataKey="value" paddingAngle={3}>
+                  {kpis.distribucionEspecialidades.map((e, i) => <Cell key={i} fill={e.color} />)}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
             <div className="flex-1 space-y-1.5">
-              {d.distribucionEspecialidades.map(item => (
+              {kpis.distribucionEspecialidades.map(item => (
                 <div key={item.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.color }} />
@@ -214,17 +240,19 @@ export default function Dashboard() {
           </div>
           <Link to="/casos" className="text-[10px] text-blue-400">Ver todos</Link>
         </div>
-        {DASHBOARD_DATA.casosRecientes.map((caso, i) => (
+        {casos.length === 0 ? (
+          <div className="px-4 py-6 text-xs text-slate-600 text-center">No hay casos registrados aún. <Link to="/casos" className="text-blue-400">Crear primer caso →</Link></div>
+        ) : casos.slice(0, 5).map((caso, i) => (
           <Link to={`/casos/${caso.id}`} key={caso.id}
-            className={`flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors ${i < DASHBOARD_DATA.casosRecientes.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
-            <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: `${RISK_COLORS[caso.alerta]}60` }} />
+            className={`flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors ${i < Math.min(casos.length, 5) - 1 ? 'border-b border-white/[0.04]' : ''}`}>
+            <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: `${RISK_COLORS[caso.alerta as keyof typeof RISK_COLORS]}60` }} />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white truncate">{caso.titulo}</p>
               <p className="text-[10px] text-slate-500 truncate">{caso.rol} · {caso.tribunal}</p>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="text-xs font-black" style={{ color: caso.probabilidadExito > 70 ? '#22c55e' : caso.probabilidadExito > 50 ? '#eab308' : '#ef4444' }}>
-                {caso.probabilidadExito}%
+              <div className="text-xs font-black" style={{ color: (caso.probabilidadExito||0) > 70 ? '#22c55e' : (caso.probabilidadExito||0) > 50 ? '#eab308' : '#ef4444' }}>
+                {caso.probabilidadExito || 0}%
               </div>
               <p className="text-[10px] text-slate-600">éxito</p>
             </div>

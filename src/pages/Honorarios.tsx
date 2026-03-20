@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DollarSign, TrendingUp, Clock, CheckCircle, AlertTriangle, Download, Trash2, Edit2, X, Save, Plus } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { HONORARIOS, UF_VALOR_CLP, DASHBOARD_DATA, CLIENTES } from '../data/appData'
+import { UF_VALOR_CLP, DASHBOARD_DATA } from '../data/appData'
 import type { Honorario } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { useAppData } from '../context/AppDataContext'
 
 const ESTADO_CONFIG = {
   pagado:   { color: '#22c55e', bg: 'rgba(34,197,94,0.12)',   label: 'Pagado' },
@@ -15,7 +16,7 @@ const ESTADO_CONFIG = {
 
 export default function Honorarios() {
   const { canDelete, canCreate } = useAuth()
-  const [honorarios, setHonorarios] = useState<Honorario[]>(HONORARIOS)
+  const { honorarios, addHonorario, updateHonorario, deleteHonorario } = useAppData()
   const [filter, setFilter] = useState<'todos' | keyof typeof ESTADO_CONFIG>('todos')
   const [editTarget, setEditTarget] = useState<Honorario | null>(null)
   const [showNuevo, setShowNuevo] = useState(false)
@@ -26,7 +27,7 @@ export default function Honorarios() {
   const totalVencidoUF = honorarios.filter(h => h.estado === 'vencido').reduce((s, h) => s + h.montoUF, 0)
 
   const saveEdit = (updated: Honorario) => {
-    setHonorarios(prev => prev.map(h => h.id === updated.id ? updated : h))
+    updateHonorario(updated)
     setEditTarget(null)
   }
 
@@ -128,7 +129,7 @@ export default function Honorarios() {
                     <p className="text-[10px] text-slate-600">${(h.montoCLP / 1_000_000).toFixed(2)}M</p>
                   </div>
                   {canDelete && (
-                    <button onClick={() => setHonorarios(prev => prev.filter(x => x.id !== h.id))}
+                    <button onClick={() => deleteHonorario(h.id)}
                       className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/20 mt-0.5">
                       <Trash2 size={12} className="text-red-400" />
                     </button>

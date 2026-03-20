@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { AppDataProvider } from './context/AppDataContext'
 import Header from './components/Header'
 import { Sidebar, BottomNav } from './components/Sidebar'
 import Login from './pages/Login'
@@ -77,7 +78,9 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppShell />
+      <AppDataProvider>
+        <AppShell />
+      </AppDataProvider>
     </AuthProvider>
   )
 }

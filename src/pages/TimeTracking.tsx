@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Timer, Play, Pause, Square, Trash2, Clock, BarChart2, Target, CheckCircle, Briefcase, ChevronDown } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { useAppData } from '../context/AppDataContext'
 
 type TimerState = 'stopped' | 'running' | 'paused'
 
@@ -19,13 +20,6 @@ interface TimeEntry {
   billable: boolean
 }
 
-const CASES = [
-  'Caso González - Laboral',
-  'Caso Martínez - Civil',
-  'Caso TechCorp - Comercial',
-  'Caso Rodríguez - Familia',
-]
-
 const CATEGORIES: Category[] = ['Reunión', 'Redacción', 'Investigación', 'Trámites', 'Audiencia']
 
 const CATEGORY_COLORS: Record<Category, string> = {
@@ -35,15 +29,6 @@ const CATEGORY_COLORS: Record<Category, string> = {
   Trámites: '#f59e0b',
   Audiencia: '#ef4444',
 }
-
-const INITIAL_ENTRIES: TimeEntry[] = [
-  { id: '1', caseName: 'Caso González - Laboral', description: 'Revisión contrato colectivo y jurisprudencia aplicable', category: 'Investigación', durationSeconds: 5400, startTime: '08:30', date: '2026-03-03', billable: true },
-  { id: '2', caseName: 'Caso Martínez - Civil', description: 'Redacción demanda ordinaria de indemnización', category: 'Redacción', durationSeconds: 7200, startTime: '10:15', date: '2026-03-03', billable: true },
-  { id: '3', caseName: 'Caso TechCorp - Comercial', description: 'Reunión con cliente para revisar propuesta contractual', category: 'Reunión', durationSeconds: 3600, startTime: '12:00', date: '2026-03-03', billable: true },
-  { id: '4', caseName: 'Caso Rodríguez - Familia', description: 'Trámites en el Registro Civil para obtener documentos', category: 'Trámites', durationSeconds: 2700, startTime: '14:30', date: '2026-03-03', billable: false },
-  { id: '5', caseName: 'Caso González - Laboral', description: 'Audiencia preparatoria ante el Juzgado del Trabajo', category: 'Audiencia', durationSeconds: 4500, startTime: '09:00', date: '2026-03-02', billable: true },
-  { id: '6', caseName: 'Caso Martínez - Civil', description: 'Investigación jurisprudencia Corte Suprema 2024-2025', category: 'Investigación', durationSeconds: 6300, startTime: '11:00', date: '2026-03-02', billable: true },
-]
 
 const WEEKLY_DATA = [
   { day: 'Lun', billable: 6.5, nonBillable: 1.0 },
@@ -70,12 +55,12 @@ function formatDurationShort(seconds: number): string {
 }
 
 export default function TimeTracking() {
+  const { timeEntries: entries, addTimeEntry, deleteTimeEntry, casos } = useAppData()
   const [timerState, setTimerState] = useState<TimerState>('stopped')
   const [elapsed, setElapsed] = useState(0)
-  const [entries, setEntries] = useState<TimeEntry[]>(INITIAL_ENTRIES)
   const [showAssign, setShowAssign] = useState(false)
   const [assignForm, setAssignForm] = useState({
-    caseName: CASES[0],
+    caseName: casos[0]?.titulo || casos[0]?.clienteNombre || '',
     description: '',
     category: 'Reunión' as Category,
     billable: true,
@@ -129,13 +114,13 @@ export default function TimeTracking() {
       date: new Date().toISOString().slice(0, 10),
       billable: assignForm.billable,
     }
-    setEntries(prev => [newEntry, ...prev])
+    addTimeEntry(newEntry)
     setElapsed(0)
     setShowAssign(false)
-    setAssignForm({ caseName: CASES[0], description: '', category: 'Reunión', billable: true })
+    setAssignForm({ caseName: casos[0]?.titulo || casos[0]?.clienteNombre || '', description: '', category: 'Reunión', billable: true })
   }
 
-  const handleDelete = (id: string) => setEntries(prev => prev.filter(e => e.id !== id))
+  const handleDelete = (id: string) => deleteTimeEntry(id)
 
   const today = new Date().toISOString().slice(0, 10)
   const todayEntries = entries.filter(e => e.date === today)
@@ -382,7 +367,10 @@ export default function TimeTracking() {
                       onChange={e => setAssignForm(f => ({ ...f, caseName: e.target.value }))}
                       className="w-full px-3 py-2.5 rounded-xl text-xs text-slate-200 outline-none appearance-none pr-8"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {CASES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {casos.map(c => {
+                        const label = c.titulo || c.clienteNombre
+                        return <option key={c.id} value={label}>{label}</option>
+                      })}
                     </select>
                     <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                   </div>

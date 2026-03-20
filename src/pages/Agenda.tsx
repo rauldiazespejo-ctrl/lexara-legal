@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { CalendarDays, Clock, Gavel, AlertTriangle, CheckCircle, MapPin, ChevronRight, Trash2, Plus } from 'lucide-react'
-import { EVENTOS_AGENDA } from '../data/appData'
 import type { EventoAgenda } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { useAppData } from '../context/AppDataContext'
 
 const TIPO_ICONS: Record<EventoAgenda['tipo'], React.ElementType> = {
   audiencia: Gavel, plazo: AlertTriangle, reunion: Clock,
@@ -20,7 +20,7 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto'
 
 export default function Agenda() {
   const { canDelete, canCreate } = useAuth()
-  const [eventos, setEventos] = useState<EventoAgenda[]>(EVENTOS_AGENDA)
+  const { eventos, addEvento, deleteEvento } = useAppData()
   const [view, setView] = useState<'lista' | 'semana'>('lista')
   const today = new Date()
 
@@ -137,7 +137,7 @@ export default function Agenda() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <div className="w-2 h-2 rounded-full" style={{ background: PRIORITY_COLORS[ev.prioridad] }} />
                   {canDelete && (
-                    <button onClick={() => setEventos(prev => prev.filter(e => e.id !== ev.id))}
+                    <button onClick={() => deleteEvento(ev.id)}
                       className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/20">
                       <Trash2 size={11} className="text-red-400" />
                     </button>

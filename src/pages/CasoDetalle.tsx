@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Scale, Clock, Gavel, FileText, Target, TrendingUp, ChevronDown, ChevronUp, CheckCircle, AlertTriangle, Circle } from 'lucide-react'
-import { CASOS } from '../data/appData'
+import { useAppData } from '../context/AppDataContext'
 
 const TABS = [
   { id: 'teoria', label: 'Teoría del Caso', icon: Target },
@@ -16,7 +16,8 @@ const ESTADO_LABELS = { fuerte: 'Sólido', debil: 'Débil', pendiente: 'Pendient
 
 export default function CasoDetalle() {
   const { id } = useParams()
-  const caso = CASOS.find(c => c.id === id) || CASOS[0]
+  const { casos } = useAppData()
+  const caso = casos.find(c => c.id === id) || casos[0]
   const [activeTab, setActiveTab] = useState('teoria')
   const [expandedPillar, setExpandedPillar] = useState<string | null>('hechos')
 

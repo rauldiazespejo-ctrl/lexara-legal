@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Search, Scale, ChevronDown, ChevronUp, ExternalLink, Plus, Trash2, X, Save, Shield } from 'lucide-react'
 import { CHILEAN_LEGAL_REFERENCES, NORMATIVA_POR_ESPECIALIDAD } from '../data/legalDatabase'
 import { useAuth } from '../context/AuthContext'
+import { useAppData } from '../context/AppDataContext'
 
 const CATEGORIES = [
   { id: 'all', label: 'Todos los artículos' },
@@ -100,10 +101,10 @@ function NuevaNormaModal({ onClose, onSave }: { onClose: () => void; onSave: (n:
 
 export default function Normativa() {
   const { canEditFramework, canDelete } = useAuth()
+  const { customNormas, addNorma, deleteNorma } = useAppData()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [customNormas, setCustomNormas] = useState<any[]>([])
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<'articulos' | 'especialidades'>('especialidades')
   const [expandedEsp, setExpandedEsp] = useState<string | null>(null)
@@ -265,7 +266,7 @@ export default function Normativa() {
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {canDelete && ref.custom && (
-                      <button onClick={e => { e.stopPropagation(); setCustomNormas(prev => prev.filter(n => n.id !== ref.id)) }}
+                      <button onClick={e => { e.stopPropagation(); deleteNorma(ref.id) }}
                         className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all">
                         <Trash2 size={11} className="text-red-400" />
                       </button>
@@ -306,7 +307,7 @@ export default function Normativa() {
       )}
 
       <AnimatePresence>
-        {showModal && <NuevaNormaModal onClose={() => setShowModal(false)} onSave={n => setCustomNormas(prev => [...prev, n])} />}
+        {showModal && <NuevaNormaModal onClose={() => setShowModal(false)} onSave={n => addNorma(n)} />}
       </AnimatePresence>
     </div>
   )

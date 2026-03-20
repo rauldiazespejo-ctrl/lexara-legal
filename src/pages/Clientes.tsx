@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Search, Plus, Phone, Mail, AlertTriangle, Building2, User, ChevronRight, Trash2, X, Save, Shield } from 'lucide-react'
-import { CLIENTES } from '../data/appData'
 import type { Cliente, Specialty } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { useAppData } from '../context/AppDataContext'
 
 const SPECIALTY_COLORS: Record<Specialty, string> = {
   civil: '#3b82f6', comercial: '#8b5cf6', laboral: '#22c55e',
@@ -244,7 +244,7 @@ function ConfirmDelete({ nombre, onConfirm, onCancel }: { nombre: string; onConf
 
 export default function Clientes() {
   const { canDelete, canCreate, isSuperAdmin } = useAuth()
-  const [clientes, setClientes] = useState<Cliente[]>(CLIENTES)
+  const { clientes, addCliente, deleteCliente } = useAppData()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'todos' | 'activo' | 'prospecto'>('todos')
   const [showModal, setShowModal] = useState(false)
@@ -257,8 +257,8 @@ export default function Clientes() {
     return matchSearch && matchFilter
   })
 
-  const handleSave = (nuevo: Cliente) => setClientes(prev => [nuevo, ...prev])
-  const handleDelete = (id: string) => { setClientes(prev => prev.filter(c => c.id !== id)); setDeleteTarget(null) }
+  const handleSave = (nuevo: Cliente) => addCliente(nuevo)
+  const handleDelete = (id: string) => { deleteCliente(id); setDeleteTarget(null) }
 
   return (
     <div className="space-y-4">

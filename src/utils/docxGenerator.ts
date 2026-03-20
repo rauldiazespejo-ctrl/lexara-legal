@@ -90,7 +90,7 @@ export async function generateDocx(datos: DatosContrato): Promise<Blob> {
   const doc = new Document({
     creator: 'NexusForge — Sistema Legal Inteligente',
     title: datos.tipoContrato,
-    description: `Generado por NexusForge el ${new Date().toLocaleDateString('es-CL')}`,
+    description: `Generado por LEXARA PRO � NexusForge el ${new Date().toLocaleDateString('es-CL')}`,
     styles: {
       default: {
         document: {
@@ -134,7 +134,7 @@ export async function generateDocx(datos: DatosContrato): Promise<Blob> {
                 new TextRun({ children: [PageNumber.CURRENT], size: 18, color: '94a3b8', font: 'Calibri' }),
                 textRun(' de ', { size: 9, color: '94a3b8' }),
                 new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 18, color: '94a3b8', font: 'Calibri' }),
-                textRun(`   ·   ${datos.tipoContrato}   ·   Generado por NexusForge — ${new Date().toLocaleDateString('es-CL')}`, { size: 9, color: 'cbd5e1', italics: true }),
+                textRun(`   ·   ${datos.tipoContrato}   ·   Generado por LEXARA PRO � NexusForge — ${new Date().toLocaleDateString('es-CL')}`, { size: 9, color: 'cbd5e1', italics: true }),
               ],
               alignment: AlignmentType.CENTER,
               border: { top: { style: BorderStyle.SINGLE, size: 1, color: 'e2e8f0' } },

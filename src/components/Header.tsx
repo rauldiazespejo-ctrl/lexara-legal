@@ -7,8 +7,8 @@ import { useState, useEffect } from 'react'
 function NexusForgeLogo({ size = 32 }: { size?: number }) {
   return (
     <div className="rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
-      style={{ width: size, height: size, boxShadow: '0 2px 12px rgba(29,78,216,0.4)' }}>
-      <img src="/nexusforge-logo.jpg" alt="NexusForge" style={{ width: size, height: size, objectFit: 'contain', padding: 2 }} />
+      style={{ width: size, height: size, minWidth: size, boxShadow: '0 2px 12px rgba(29,78,216,0.4)', padding: 3 }}>
+      <img src="/nexusforge-logo.jpg" alt="LEXARA PRO" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
     </div>
   )
 }
@@ -53,9 +53,9 @@ export default function Header() {
           <div className="flex flex-col leading-none">
             <span className="text-base font-black tracking-tight"
               style={{ background: 'linear-gradient(95deg,#60a5fa 0%,#1d4ed8 50%,#60a5fa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200%', animation: 'shimmer 4s linear infinite' }}>
-              NexusForge
+              LEXARA PRO
             </span>
-            <span className="text-[8px] text-slate-600 font-semibold tracking-[0.2em] uppercase hidden sm:block">Legal Intelligence</span>
+            <span className="text-[8px] text-slate-600 font-semibold tracking-[0.15em] uppercase hidden sm:block">by NexusForge</span>
           </div>
         </Link>
 

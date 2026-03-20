@@ -336,9 +336,9 @@ function tablaResumenEjecutivo(data: InformeLegalData) {
 // ── Generador principal ───────────────────────────────────────────────────────
 export async function generateInformeLegal(data: InformeLegalData): Promise<Blob> {
   const doc = new Document({
-    creator: 'NexusForge — Legal Intelligence Platform',
+    creator: 'LEXARA PRO � NexusForge'
     title: `Análisis Jurídico — ${data.titulo}`,
-    description: `Generado por NexusForge el ${data.fecha}`,
+    description: `Generado por LEXARA PRO � NexusForge el ${data.fecha}`,
     styles: {
       default: {
         document: {
@@ -379,7 +379,7 @@ export async function generateInformeLegal(data: InformeLegalData): Promise<Blob
           children: [
             new Paragraph({
               children: [
-                run('⚖ NexusForge Legal Intelligence  ·  ', { size: 8, color: 'c7d2fe' }),
+                run('⚖ LEXARA PRO  ·  ', { size: 8, color: 'c7d2fe' }),
                 run('Basado en Ordenamiento Jurídico Chileno  ·  ', { size: 8, color: C.slate, italics: true }),
                 run('Página ', { size: 8, color: C.slate }),
                 new TextRun({ children: [PageNumber.CURRENT], size: 16, color: C.slate, font: 'Calibri' }),
@@ -511,7 +511,7 @@ export async function generateInformeLegal(data: InformeLegalData): Promise<Blob
           spacing: { before: 320, after: 40 },
         }),
         new Paragraph({
-          children: [run('NexusForge Legal Intelligence Platform', { bold: true, size: 9, color: C.violet })],
+          children: [run('LEXARA PRO � NexusForge', { bold: true, size: 9, color: C.violet })],
           alignment: AlignmentType.RIGHT,
           spacing: { before: 0, after: 20 },
         }),

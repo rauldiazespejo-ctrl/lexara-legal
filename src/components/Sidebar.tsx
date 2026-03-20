@@ -13,9 +13,9 @@ import { useState } from 'react'
 
 function NexusForgeLogoSidebar() {
   return (
-    <div className="w-9 h-9 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
-      style={{ boxShadow: '0 2px 12px rgba(29,78,216,0.35)' }}>
-      <img src="/nexusforge-logo.jpg" alt="NexusForge" className="w-full h-full object-contain p-0.5" />
+    <div className="rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
+      style={{ width: 36, height: 36, minWidth: 36, boxShadow: '0 2px 10px rgba(29,78,216,0.35)', padding: 3 }}>
+      <img src="/nexusforge-logo.jpg" alt="LEXARA PRO" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
     </div>
   )
 }
@@ -204,8 +204,8 @@ export function Sidebar() {
         </NavLink>
         <div className="mt-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(29,78,216,0.05)', border: '1px solid rgba(29,78,216,0.12)' }}>
           <p className="text-[9px] text-slate-700 font-semibold leading-relaxed">
-            NexusForge v2.0 · <span className="text-blue-600">Derecho Chileno</span><br />
-            <span className="text-slate-800">Legal Intelligence Platform</span>
+            LEXARA PRO · <span className="text-blue-600">Derecho Chileno</span><br />
+            <span className="text-slate-800">Desarrollado por NexusForge</span>
           </p>
         </div>
       </div>

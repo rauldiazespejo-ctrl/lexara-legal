@@ -336,8 +336,8 @@ function tablaResumenEjecutivo(data: InformeLegalData) {
 // ── Generador principal ───────────────────────────────────────────────────────
 export async function generateInformeLegal(data: InformeLegalData): Promise<Blob> {
   const doc = new Document({
-    creator: 'LEXARA PRO � NexusForge'
-    title: `Análisis Jurídico — ${data.titulo}`,
+    creator: 'LEXARA PRO � NexusForge',
+    title: `An�lisis Jur�dico � `,
     description: `Generado por LEXARA PRO � NexusForge el ${data.fecha}`,
     styles: {
       default: {

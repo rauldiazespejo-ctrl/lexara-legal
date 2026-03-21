@@ -67,33 +67,73 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
 }`
 }
 
-// ── Llamada a API Whisper ───────────────────────────────────────────────────────
-async function transcribirAudio(audioBlob: Blob, apiKey: string): Promise<{ texto: string; segmentos: { texto: string; inicio: number; fin: number }[] }> {
-  const formData = new FormData()
-  const ext = audioBlob.type.includes('webm') ? 'webm' : audioBlob.type.includes('mp4') ? 'mp4' : 'mp3'
-  formData.append('file', audioBlob, `audio.${ext}`)
-  formData.append('model', 'whisper-1')
-  formData.append('language', 'es')
-  formData.append('response_format', 'verbose_json')
-  formData.append('temperature', '0')
+// ── API keys ───────────────────────────────────────────────────────────────────
+const getGroqKey  = () => localStorage.getItem('lexara_groq_key')    || ''
+const getOpenAIKey= () => localStorage.getItem('lexara_openai_key')  || ''
+const getClaudeKey= () => localStorage.getItem('lexara_anthropic_key')|| ''
+const getGeminiKey= () => localStorage.getItem('lexara_gemini_key')  || ''
 
-  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+// ── Transcripción con Groq Whisper (GRATIS) ────────────────────────────────────
+async function transcribirGroq(audioBlob: Blob, apiKey: string): Promise<string> {
+  const ext = audioBlob.type.includes('webm') ? 'webm'
+    : audioBlob.type.includes('mp4') ? 'mp4'
+    : audioBlob.type.includes('ogg') ? 'ogg' : 'mp3'
+  const formData = new FormData()
+  formData.append('file', audioBlob, `audio.${ext}`)
+  formData.append('model', 'whisper-large-v3')
+  formData.append('language', 'es')
+  formData.append('response_format', 'text')
+  const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}` },
     body: formData,
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err?.error?.message || `Whisper API error ${res.status}`)
+    throw new Error(err?.error?.message || `Groq Whisper error ${res.status}`)
   }
-  const data = await res.json()
-  return {
-    texto: data.text || '',
-    segmentos: (data.segments || []).map((s: any) => ({ texto: s.text, inicio: s.start, fin: s.end })),
-  }
+  return await res.text()
 }
 
-// ── Llamada a GPT-4o para análisis ─────────────────────────────────────────────
+// ── Transcripción con OpenAI Whisper ──────────────────────────────────────────
+async function transcribirOpenAI(audioBlob: Blob, apiKey: string): Promise<string> {
+  const ext = audioBlob.type.includes('webm') ? 'webm' : audioBlob.type.includes('mp4') ? 'mp4' : 'mp3'
+  const formData = new FormData()
+  formData.append('file', audioBlob, `audio.${ext}`)
+  formData.append('model', 'whisper-1')
+  formData.append('language', 'es')
+  formData.append('response_format', 'text')
+  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: formData,
+  })
+  if (!res.ok) throw new Error(`OpenAI Whisper error ${res.status}`)
+  return await res.text()
+}
+
+// ── Análisis con Groq Llama 3.3 70B (GRATIS) ──────────────────────────────────
+async function analizarConGroq(texto: string, apiKey: string): Promise<TeoriaDelCaso> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: buildPromptHechos(texto) }],
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `Groq error ${res.status}`)
+  }
+  const data = await res.json()
+  const raw = data.choices?.[0]?.message?.content || '{}'
+  return { ...JSON.parse(raw), modeloIA: 'Groq · Llama 3.3 70B (gratuito)', fecha: new Date().toLocaleDateString('es-CL') }
+}
+
+// ── Análisis con GPT-4o ────────────────────────────────────────────────────────
 async function analizarConGPT(texto: string, apiKey: string): Promise<TeoriaDelCaso> {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -310,12 +350,18 @@ export default function TeoriaDelCaso() {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Groq key inline
+  const [groqKeyInput, setGroqKeyInput] = useState('')
+  const [mostrarGroqPanel, setMostrarGroqPanel] = useState(false)
+
   // Audio
   const [grabando, setGrabando] = useState(false)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [audioURL, setAudioURL] = useState<string | null>(null)
   const [duracion, setDuracion] = useState(0)
+  const [speechTranscript, setSpeechTranscript] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recognitionRef = useRef<any>(null)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -329,15 +375,19 @@ export default function TeoriaDelCaso() {
   // Resultado
   const [teoria, setTeoria] = useState<TeoriaDelCaso | null>(null)
 
-  // API Keys
-  const openaiKey = () => localStorage.getItem('lexara_openai_key') || ''
-  const anthropicKey = () => localStorage.getItem('lexara_anthropic_key') || ''
-  const geminiKey = () => localStorage.getItem('lexara_gemini_key') || ''
+  const guardarGroqKey = () => {
+    if (groqKeyInput.trim()) {
+      localStorage.setItem('lexara_groq_key', groqKeyInput.trim())
+      setMostrarGroqPanel(false)
+      setGroqKeyInput('')
+    }
+  }
 
-  // ── Grabación ──────────────────────────────────────────────────────────────
+  // ── Grabación con Web Speech API (transcripción en vivo, GRATIS) ──────────────
   const iniciarGrabacion = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } })
+      // MediaRecorder para guardar el audio
       const mr = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' })
       chunksRef.current = []
       mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
@@ -349,6 +399,32 @@ export default function TeoriaDelCaso() {
       }
       mr.start(1000)
       mediaRecorderRef.current = mr
+
+      // Web Speech API para transcripción en tiempo real (completamente gratis)
+      const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (SpeechRec) {
+        const rec = new SpeechRec()
+        rec.lang = 'es-CL'
+        rec.continuous = true
+        rec.interimResults = true
+        let textoAcumulado = ''
+        rec.onresult = (event: any) => {
+          let interim = ''
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              textoAcumulado += event.results[i][0].transcript + ' '
+            } else {
+              interim = event.results[i][0].transcript
+            }
+          }
+          setSpeechTranscript(textoAcumulado + interim)
+          setTranscripcion(textoAcumulado + interim)
+        }
+        rec.onerror = () => {}
+        rec.start()
+        recognitionRef.current = rec
+      }
+
       setGrabando(true)
       setDuracion(0)
       timerRef.current = setInterval(() => setDuracion(d => d + 1), 1000)
@@ -359,6 +435,7 @@ export default function TeoriaDelCaso() {
 
   const detenerGrabacion = () => {
     mediaRecorderRef.current?.stop()
+    recognitionRef.current?.stop()
     setGrabando(false)
     if (timerRef.current) clearInterval(timerRef.current)
   }
@@ -401,29 +478,43 @@ export default function TeoriaDelCaso() {
       setError('Debe cargar al menos un audio o un documento.')
       return
     }
+    // Si ya tenemos transcripción del micrófono (Web Speech), ir directo
+    if (transcripcion.trim().length > 30 && !audioBlob && documentos.length === 0) {
+      setPaso(1); return
+    }
     setCargando(true)
     setError(null)
     try {
-      let textoFinal = ''
-      if (audioBlob) {
-        const key = openaiKey()
-        if (!key) throw new Error('Configure su API key de OpenAI en Configuración para transcribir audio. Sin ella puede ingresar la transcripción manualmente.')
-        const resultado = await transcribirAudio(audioBlob, key)
-        textoFinal = resultado.texto
+      let textoFinal = transcripcion // conservar lo que ya hay del Web Speech
+
+      // Transcripción de archivo de audio (usa Groq o OpenAI)
+      if (audioBlob && textoFinal.length < 30) {
+        const groqKey = getGroqKey()
+        const openaiKey = getOpenAIKey()
+        if (groqKey) {
+          textoFinal = await transcribirGroq(audioBlob, groqKey)
+        } else if (openaiKey) {
+          textoFinal = await transcribirOpenAI(audioBlob, openaiKey)
+        } else {
+          // Sin key: dejar al usuario con transcripción manual
+          setTranscribiendoManual(true)
+          setMostrarGroqPanel(true)
+          setPaso(1)
+          setCargando(false)
+          return
+        }
       }
+
+      // Agregar texto de documentos
       if (documentos.length > 0) {
-        textoFinal += (textoFinal ? '\n\n--- DOCUMENTOS ---\n\n' : '') + documentos.map(d => `[${d.nombre}]\n${d.texto}`).join('\n\n')
+        textoFinal += (textoFinal ? '\n\n--- DOCUMENTOS DE PRUEBA ---\n\n' : '')
+          + documentos.map(d => `[${d.nombre}]\n${d.texto}`).join('\n\n')
       }
+
       setTranscripcion(textoFinal)
       setPaso(1)
     } catch (e: any) {
-      if (e.message.includes('Configure su API key')) {
-        setTranscripcion('')
-        setPaso(1)
-        setTranscribiendoManual(true)
-      } else {
-        setError(e.message)
-      }
+      setError(e.message)
     } finally {
       setCargando(false)
     }
@@ -439,12 +530,19 @@ export default function TeoriaDelCaso() {
     setError(null)
     try {
       let resultado: TeoriaDelCaso
-      if (openaiKey()) {
-        resultado = await analizarConGPT(transcripcion, openaiKey())
-      } else if (anthropicKey()) {
-        resultado = await analizarConClaude(transcripcion, anthropicKey())
-      } else if (geminiKey()) {
-        resultado = await analizarConGemini(transcripcion, geminiKey())
+      const groqKey = getGroqKey()
+      const openaiKey = getOpenAIKey()
+      const claudeKey = getClaudeKey()
+      const geminiKey = getGeminiKey()
+
+      if (groqKey) {
+        resultado = await analizarConGroq(transcripcion, groqKey)
+      } else if (openaiKey) {
+        resultado = await analizarConGPT(transcripcion, openaiKey)
+      } else if (claudeKey) {
+        resultado = await analizarConClaude(transcripcion, claudeKey)
+      } else if (geminiKey) {
+        resultado = await analizarConGemini(transcripcion, geminiKey)
       } else {
         resultado = analizarDemo(transcripcion)
       }
@@ -503,7 +601,36 @@ export default function TeoriaDelCaso() {
         )}
       </AnimatePresence>
 
-      {/* PASO 0 — Cargar antecedentes */}
+      {/* Panel Groq Key gratuito */}
+      <AnimatePresence>
+        {mostrarGroqPanel && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="p-4 rounded-2xl space-y-3"
+            style={{ background: 'rgba(29,78,216,0.08)', border: '1px solid rgba(59,130,246,0.3)' }}>
+            <div className="flex items-center gap-2">
+              <Zap size={15} className="text-blue-400" />
+              <p className="text-xs font-bold text-blue-300">Activa IA Gratuita — Groq (Llama 3.3 + Whisper)</p>
+              <button onClick={() => setMostrarGroqPanel(false)} className="ml-auto"><X size={13} className="text-slate-500" /></button>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Groq ofrece <span className="text-green-400 font-semibold">14.400 requests/día completamente gratis</span> con los modelos más avanzados.
+              Obtén tu clave en <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">console.groq.com/keys</a> (solo requiere email).
+            </p>
+            <div className="flex gap-2">
+              <input value={groqKeyInput} onChange={e => setGroqKeyInput(e.target.value)}
+                placeholder="gsk_xxxxxxxxxxxxxxxxxxxx"
+                className="flex-1 bg-black/30 text-xs text-slate-200 px-3 py-2 rounded-xl outline-none font-mono"
+                style={{ border: '1px solid rgba(59,130,246,0.3)' }}
+                onKeyDown={e => e.key === 'Enter' && guardarGroqKey()} />
+              <button onClick={guardarGroqKey}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white"
+                style={{ background: '#1d4ed8' }}>
+                Guardar
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence mode="wait">
         {paso === 0 && (
           <motion.div key="paso0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
@@ -516,7 +643,7 @@ export default function TeoriaDelCaso() {
               </div>
               <div className="p-5 space-y-4">
                 {/* Grabador */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <motion.button
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={grabando ? detenerGrabacion : iniciarGrabacion}
@@ -524,15 +651,30 @@ export default function TeoriaDelCaso() {
                     style={grabando
                       ? { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171' }
                       : { background: 'rgba(29,78,216,0.15)', border: '1px solid rgba(29,78,216,0.3)', color: '#60a5fa' }}>
-                    {grabando ? <><MicOff size={16} /><span>Detener Grabación</span></> : <><Mic size={16} /><span>Grabar Audio</span></>}
+                    {grabando ? <><MicOff size={16} /><span>Detener</span></> : <><Mic size={16} /><span>Grabar Audio</span></>}
                   </motion.button>
                   {grabando && (
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                       <span className="text-sm font-mono text-red-400">{formatDuracion(duracion)}</span>
+                      <span className="text-[10px] text-green-400 font-semibold animate-pulse">● Transcribiendo en vivo...</span>
                     </div>
                   )}
+                  {!getGroqKey() && (
+                    <button onClick={() => setMostrarGroqPanel(v => !v)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold"
+                      style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#4ade80' }}>
+                      <Zap size={11} />Activar IA Gratis
+                    </button>
+                  )}
                 </div>
+                {/* Preview transcripción en vivo */}
+                {grabando && speechTranscript && (
+                  <div className="p-3 rounded-xl text-[11px] text-slate-400 font-mono leading-relaxed max-h-24 overflow-y-auto"
+                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    {speechTranscript}
+                  </div>
+                )}
                 {/* Drop zone audio */}
                 <div {...getAudioRootProps()} className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all"
                   style={{ borderColor: isAudioDrag ? '#3b82f6' : 'rgba(255,255,255,0.08)', background: isAudioDrag ? 'rgba(59,130,246,0.05)' : 'transparent' }}>
@@ -604,8 +746,22 @@ export default function TeoriaDelCaso() {
               </div>
               <div className="p-5">
                 {transcribiendoManual && !transcripcion && (
-                  <div className="mb-3 p-3 rounded-xl" style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)' }}>
-                    <p className="text-[11px] text-yellow-300">Sin API key de OpenAI no es posible transcribir audio automáticamente. Ingrese la transcripción manualmente o agregue solo documentos.</p>
+                  <div className="mb-3 p-3 rounded-xl space-y-2" style={{ background: 'rgba(29,78,216,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
+                    <p className="text-[11px] text-blue-300 font-semibold">Para transcripción automática, activa la IA gratuita de Groq:</p>
+                    <div className="flex gap-2">
+                      <input value={groqKeyInput} onChange={e => setGroqKeyInput(e.target.value)}
+                        placeholder="Pega tu Groq key aquí (gsk_...)"
+                        className="flex-1 bg-black/30 text-xs text-slate-200 px-3 py-2 rounded-xl outline-none font-mono"
+                        style={{ border: '1px solid rgba(59,130,246,0.3)' }}
+                        onKeyDown={e => e.key === 'Enter' && guardarGroqKey()} />
+                      <button onClick={guardarGroqKey}
+                        className="px-3 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0"
+                        style={{ background: '#1d4ed8' }}>Guardar</button>
+                    </div>
+                    <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
+                      className="text-[10px] text-green-400 underline">
+                      Obtener clave gratis en console.groq.com/keys →
+                    </a>
                   </div>
                 )}
                 <textarea value={transcripcion} onChange={e => setTranscripcion(e.target.value)}

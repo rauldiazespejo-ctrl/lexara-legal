@@ -2,8 +2,55 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen, Search, FileText, Scale, Tag, Copy, ExternalLink,
-  ChevronDown, ChevronUp, CheckCircle, Plus, Link2,
+  ChevronDown, ChevronUp, CheckCircle, Plus, Link2, Download,
 } from 'lucide-react'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
+
+async function downloadFormularioWord(form: Formulario, text: string) {
+  const lines = text.split('\n')
+  const children = lines.map(line => {
+    if (line.startsWith('I. ') || line.startsWith('II. ') || line.startsWith('III. ') || line.startsWith('POR TANTO') || line.startsWith('EN SUBSIDIO')) {
+      return new Paragraph({ children: [new TextRun({ text: line, bold: true })], spacing: { before: 200, after: 100 } })
+    }
+    if (line.startsWith('EN LO PRINCIPAL') || line.startsWith('OTROSÍ')) {
+      return new Paragraph({ children: [new TextRun({ text: line, bold: true, size: 24 })], heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 200 } })
+    }
+    return new Paragraph({ children: [new TextRun({ text: line || ' ' })], spacing: { before: 80, after: 80 } })
+  })
+
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        new Paragraph({
+          children: [new TextRun({ text: form.nombre.toUpperCase(), bold: true, size: 32, color: '1e293b' })],
+          heading: HeadingLevel.HEADING_1,
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 400, after: 400 },
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: `Materia: ${form.materia} · Actualizado: ${form.fechaActualizacion}`, color: '64748b', size: 18 })],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 600 },
+        }),
+        ...children,
+        new Paragraph({
+          children: [new TextRun({ text: '— Generado por LEXARA PRO · NexusForge —', color: '94a3b8', size: 16 })],
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 600 },
+        }),
+      ],
+    }],
+  })
+
+  const blob = await Packer.toBlob(doc)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${form.nombre.replace(/\s+/g, '_')}_LEXARA.docx`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 interface Fallo {
   id: string
@@ -534,6 +581,12 @@ function PlantillaModal({ form, onClose }: { form: Formulario; onClose: () => vo
                 : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}>
               <Copy size={12} />
               {copied ? 'Copiado' : 'Copiar'}
+            </button>
+            <button
+              onClick={() => downloadFormularioWord(form, text)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', color: '#a5b4fc' }}>
+              <Download size={12} />Word
             </button>
             <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] transition-all">
               <Plus size={15} className="rotate-45" />

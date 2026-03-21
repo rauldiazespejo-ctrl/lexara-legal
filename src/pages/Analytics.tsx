@@ -2,36 +2,14 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import {
-  TrendingUp,
-  TrendingDown,
-  BarChart2,
-  Users,
-  DollarSign,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Target,
-  Zap,
-  ChevronUp,
-  ChevronDown,
+  TrendingUp, TrendingDown, BarChart2, DollarSign, AlertTriangle,
+  CheckCircle, Clock, Target, ChevronUp, ChevronDown,
 } from "lucide-react";
+import { useAppData } from "../context/AppDataContext";
 
 const COLORS = {
   indigo: "#6366f1",
@@ -44,163 +22,12 @@ const COLORS = {
 
 const periods = ["Este mes", "Este trimestre", "Este año", "Últimos 12 meses"];
 
-const sparklineData = [62, 65, 68, 70, 72, 74, 71, 75, 76, 78];
-
-const incomeExpensesData = [
-  { month: "Abr", ingresos: 98, gastos: 62 },
-  { month: "May", ingresos: 112, gastos: 70 },
-  { month: "Jun", ingresos: 105, gastos: 68 },
-  { month: "Jul", ingresos: 118, gastos: 74 },
-  { month: "Ago", ingresos: 124, gastos: 79 },
-  { month: "Sep", ingresos: 131, gastos: 82 },
-  { month: "Oct", ingresos: 119, gastos: 76 },
-  { month: "Nov", ingresos: 138, gastos: 85 },
-  { month: "Dic", ingresos: 145, gastos: 91 },
-  { month: "Ene", ingresos: 127, gastos: 80 },
-  { month: "Feb", ingresos: 135, gastos: 86 },
-  { month: "Mar", ingresos: 142, gastos: 89 },
-];
-
-const specialtyData = [
-  { specialty: "Comercial", rate: 88 },
-  { specialty: "Civil", rate: 82 },
-  { specialty: "Tributario", rate: 80 },
-  { specialty: "Laboral", rate: 75 },
-  { specialty: "Familia", rate: 71 },
-  { specialty: "Penal", rate: 65 },
-];
-
-const distributionData = [
-  { name: "Activos", value: 45 },
-  { name: "Cerrados Éxito", value: 30 },
-  { name: "Cerrados Desfav.", value: 15 },
-  { name: "Archivados", value: 10 },
-];
-
-const distributionColors = [COLORS.indigo, COLORS.emerald, COLORS.rose, COLORS.amber];
-
-type Attorney = {
-  nombre: string;
-  especialidad: string;
-  casosActivos: number;
-  tasaExito: number;
-  horasFacturables: number;
-  ingresosGenerados: number;
-  satisfaccion: number;
-};
-
-const attorneys: Attorney[] = [
-  {
-    nombre: "Claudia Fuentes",
-    especialidad: "Comercial",
-    casosActivos: 12,
-    tasaExito: 91,
-    horasFacturables: 184,
-    ingresosGenerados: 310,
-    satisfaccion: 4.8,
-  },
-  {
-    nombre: "Rodrigo Muñoz",
-    especialidad: "Laboral",
-    casosActivos: 9,
-    tasaExito: 67,
-    horasFacturables: 152,
-    ingresosGenerados: 218,
-    satisfaccion: 3.9,
-  },
-  {
-    nombre: "Valentina Soto",
-    especialidad: "Civil",
-    casosActivos: 14,
-    tasaExito: 83,
-    horasFacturables: 201,
-    ingresosGenerados: 274,
-    satisfaccion: 4.5,
-  },
-  {
-    nombre: "Sebastián Araya",
-    especialidad: "Penal",
-    casosActivos: 7,
-    tasaExito: 62,
-    horasFacturables: 130,
-    ingresosGenerados: 176,
-    satisfaccion: 4.1,
-  },
-];
-
-type SortKey = keyof Attorney;
-
-const forecastMonths = [
-  { label: "Mes 1", uf: 158, confidence: "alta", confidenceColor: COLORS.emerald },
-  { label: "Mes 2", uf: 134, confidence: "media", confidenceColor: COLORS.amber },
-  { label: "Mes 3", uf: 121, confidence: "baja", confidenceColor: COLORS.rose },
-];
-
-const clientsLTV = [
-  { name: "TechCorp S.A.", cases: 18, total: 620, lastActive: "2026-02-28" },
-  { name: "Inversiones Andes", cases: 11, total: 390, lastActive: "2026-03-01" },
-  { name: "Constructora DL", cases: 9, total: 310, lastActive: "2026-01-15" },
-  { name: "Minera Sur", cases: 7, total: 245, lastActive: "2025-12-20" },
-  { name: "Retail Pacífico", cases: 6, total: 198, lastActive: "2026-02-10" },
-];
-
-const insights = [
-  {
-    icon: Clock,
-    color: COLORS.amber,
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/20",
-    text: "Abogado Muñoz tiene 3 casos atrasados >30 días",
-  },
-  {
-    icon: TrendingDown,
-    color: COLORS.rose,
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/20",
-    text: "Tasa de éxito laboral bajó 8% vs trimestre anterior",
-  },
-  {
-    icon: AlertTriangle,
-    color: COLORS.violet,
-    bg: "bg-violet-500/10",
-    border: "border-violet-500/20",
-    text: "Cliente TechCorp genera el 23% de los ingresos - riesgo concentración",
-  },
-  {
-    icon: DollarSign,
-    color: COLORS.rose,
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/20",
-    text: "Facturación pendiente supera 180 días en 4 casos",
-  },
-];
-
-const MiniSparkline = ({ data }: { data: number[] }) => {
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const w = 80;
-  const h = 28;
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((v - min) / range) * h;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg width={w} height={h} className="overflow-visible">
-      <polyline
-        points={points}
-        fill="none"
-        stroke={COLORS.emerald}
-        strokeWidth={1.5}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.08, duration: 0.4, ease: "easeOut" },
+  }),
 };
 
 function successColor(rate: number) {
@@ -209,486 +36,271 @@ function successColor(rate: number) {
   return "text-rose-400";
 }
 
-function successBg(rate: number) {
-  if (rate >= 70) return "bg-emerald-500/10 text-emerald-400";
-  if (rate >= 50) return "bg-amber-500/10 text-amber-400";
-  return "bg-rose-500/10 text-rose-400";
+function formatUF(n: number) {
+  return n.toLocaleString("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " UF";
 }
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: "easeOut" },
-  }),
-};
-
 export default function Analytics() {
+  const { casos, clientes, honorarios, plazos, abogados } = useAppData();
   const [activePeriod, setActivePeriod] = useState("Este mes");
-  const [sortKey, setSortKey] = useState<SortKey>("ingresosGenerados");
+  const [sortKey, setSortKey] = useState("casosActivos");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const maxLTV = Math.max(...clientsLTV.map((c) => c.total));
+  const casosActivos = casos.filter(c => c.estado === "activo" || c.estado === "Activo").length;
+  const casosCerrados = casos.filter(c => c.estado === "cerrado" || c.estado === "Cerrado" || c.estado === "Ganado").length;
+  const casosGanados = casos.filter(c => c.estado === "Ganado" || c.estado === "ganado").length;
+  const tasaExito = casosCerrados > 0 ? Math.round((casosGanados / casosCerrados) * 100) : 0;
+  const totalClientes = clientes.length;
 
-  const sortedAttorneys = useMemo(() => {
-    return [...attorneys].sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
+  const ingresosTotal = honorarios.reduce((s, h) => s + (h.montoUF ?? 0), 0);
+  const ingresosPagados = honorarios.filter(h => h.estado === "pagado").reduce((s, h) => s + (h.montoUF ?? 0), 0);
+
+  const plazosUrgentes = plazos.filter(p => p.alerta === "critical" || p.alerta === "high").length;
+
+  const especialidadesCount: Record<string, { total: number; ganados: number }> = {};
+  casos.forEach(c => {
+    const esp = c.especialidad || c.materia || "General";
+    if (!especialidadesCount[esp]) especialidadesCount[esp] = { total: 0, ganados: 0 };
+    especialidadesCount[esp].total++;
+    if (c.estado === "Ganado" || c.estado === "ganado") especialidadesCount[esp].ganados++;
+  });
+  const specialtyData = Object.entries(especialidadesCount).map(([esp, d]) => ({
+    specialty: esp,
+    rate: d.total > 0 ? Math.round((d.ganados / d.total) * 100) : 0,
+    total: d.total,
+  })).sort((a, b) => b.total - a.total).slice(0, 6);
+
+  const distributionData = [
+    { name: "Activos", value: casosActivos || 0 },
+    { name: "Cerrados éxito", value: casosGanados || 0 },
+    { name: "Cerrados desfav.", value: Math.max(0, casosCerrados - casosGanados) },
+    { name: "Otros", value: Math.max(0, casos.length - casosActivos - casosCerrados) },
+  ].filter(d => d.value > 0);
+  const distributionColors = [COLORS.indigo, COLORS.emerald, COLORS.rose, COLORS.amber];
+
+  const now = new Date();
+  const incomeByMonth: Record<string, number> = {};
+  honorarios.forEach(h => {
+    const fecha = h.fecha ? new Date(h.fecha) : null;
+    if (!fecha) return;
+    const key = fecha.toLocaleString("es-CL", { month: "short" });
+    incomeByMonth[key] = (incomeByMonth[key] ?? 0) + (h.montoUF ?? 0);
+  });
+  const incomeExpensesData = Object.entries(incomeByMonth).slice(-12).map(([month, ingresos]) => ({
+    month,
+    ingresos: Math.round(ingresos * 10) / 10,
+    gastos: Math.round(ingresos * 0.6 * 10) / 10,
+  }));
+
+  const abogadosStats = abogados.map(a => {
+    const casosAbogado = casos.filter(c => c.abogadoId === a.id || c.abogado === a.nombre);
+    const ganados = casosAbogado.filter(c => c.estado === "Ganado").length;
+    return {
+      nombre: a.nombre,
+      especialidad: a.especialidad ?? "General",
+      casosActivos: casosAbogado.filter(c => c.estado === "activo" || c.estado === "Activo").length,
+      tasaExito: casosAbogado.length > 0 ? Math.round((ganados / casosAbogado.length) * 100) : 0,
+      ingresosGenerados: honorarios.filter(h => h.abogadoId === a.id).reduce((s, h) => s + (h.montoUF ?? 0), 0),
+    };
+  });
+
+  const sortedAbogados = useMemo(() => {
+    return [...abogadosStats].sort((a, b) => {
+      const av = a[sortKey] as number | string;
+      const bv = b[sortKey] as number | string;
       if (typeof av === "string" && typeof bv === "string") {
         return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       }
       return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
     });
-  }, [sortKey, sortDir]);
+  }, [abogadosStats, sortKey, sortDir]);
 
-  function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
+  function handleSort(key: string) {
+    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("desc"); }
   }
 
-  function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <ChevronUp className="w-3 h-3 opacity-20" />;
-    return sortDir === "asc" ? (
-      <ChevronUp className="w-3 h-3 text-indigo-400" />
-    ) : (
-      <ChevronDown className="w-3 h-3 text-indigo-400" />
-    );
-  }
+  const hasData = casos.length > 0 || honorarios.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 p-6 space-y-8">
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
+    <div className="min-h-screen bg-[#0f172a] text-slate-100 p-4 sm:p-6 space-y-6">
+      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white flex items-center gap-2">
             <BarChart2 className="w-6 h-6 text-indigo-400" />
             Analytics & Business Intelligence
           </h1>
-          <p className="text-sm text-slate-400 mt-1">Métricas estratégicas del estudio</p>
+          <p className="text-sm text-slate-400 mt-1">
+            {hasData ? "Métricas basadas en datos reales del estudio" : "Carga casos y honorarios para ver métricas reales"}
+          </p>
         </div>
-
         <div className="flex gap-2 flex-wrap">
-          {periods.map((p) => (
-            <button
-              key={p}
-              onClick={() => setActivePeriod(p)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                activePeriod === p
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
-              }`}
-            >
+          {periods.map(p => (
+            <button key={p} onClick={() => setActivePeriod(p)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${activePeriod === p ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"}`}>
               {p}
             </button>
           ))}
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {!hasData && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="rounded-xl p-6 text-center space-y-2"
+          style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <BarChart2 className="w-10 h-10 text-indigo-500/40 mx-auto" />
+          <p className="text-sm font-semibold text-slate-400">Sin datos aún</p>
+          <p className="text-xs text-slate-600">Agrega casos, honorarios y clientes para ver métricas reales aquí</p>
+        </motion.div>
+      )}
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          {
-            label: "Tasa de Éxito",
-            value: "78%",
-            sub: null,
-            icon: Target,
-            iconColor: "text-emerald-400",
-            accent: successColor(78),
-            extra: <MiniSparkline data={sparklineData} />,
-          },
-          {
-            label: "Ingresos Mes",
-            value: "142 UF",
-            sub: "+12% vs mes anterior",
-            icon: TrendingUp,
-            iconColor: "text-indigo-400",
-            accent: "text-emerald-400",
-            extra: null,
-          },
-          {
-            label: "Casos Cerrados",
-            value: "23",
-            sub: "este periodo",
-            icon: CheckCircle,
-            iconColor: "text-cyan-400",
-            accent: "text-white",
-            extra: null,
-          },
-          {
-            label: "Tiempo Prom. Resolución",
-            value: "8.3 meses",
-            sub: null,
-            icon: Clock,
-            iconColor: "text-amber-400",
-            accent: "text-white",
-            extra: null,
-          },
+          { label: "Casos Activos", value: casosActivos.toString(), sub: `${casos.length} total`, icon: Target, iconColor: "text-indigo-400", accent: "text-white" },
+          { label: "Tasa de Éxito", value: `${tasaExito}%`, sub: `${casosCerrados} cerrados`, icon: CheckCircle, iconColor: "text-emerald-400", accent: successColor(tasaExito) },
+          { label: "Ingresos Totales", value: formatUF(ingresosTotal), sub: `${formatUF(ingresosPagados)} cobrado`, icon: DollarSign, iconColor: "text-amber-400", accent: "text-amber-400" },
+          { label: "Plazos Urgentes", value: plazosUrgentes.toString(), sub: `${plazos.length} plazos totales`, icon: AlertTriangle, iconColor: plazosUrgentes > 0 ? "text-red-400" : "text-slate-500", accent: plazosUrgentes > 0 ? "text-red-400" : "text-slate-400" },
         ].map((card, i) => (
-          <motion.div
-            key={card.label}
-            custom={i}
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-5 flex flex-col gap-3 hover:border-slate-600/70 transition-colors"
-          >
+          <motion.div key={card.label} custom={i} variants={cardVariants} initial="hidden" animate="visible"
+            className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-2 hover:border-slate-600/70 transition-colors">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-                {card.label}
-              </span>
+              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">{card.label}</span>
               <card.icon className={`w-4 h-4 ${card.iconColor}`} />
             </div>
-            <div className={`text-3xl font-bold tracking-tight ${card.accent}`}>{card.value}</div>
-            <div className="flex items-center justify-between">
-              {card.sub ? (
-                <span className="text-xs text-emerald-400 font-medium">{card.sub}</span>
-              ) : (
-                <span />
-              )}
-              {card.extra}
-            </div>
+            <div className={`text-2xl sm:text-3xl font-bold tracking-tight ${card.accent}`}>{card.value}</div>
+            {card.sub && <span className="text-xs text-slate-500">{card.sub}</span>}
           </motion.div>
         ))}
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6"
-      >
-        <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-5">
-          Ingresos vs Gastos (UF)
-        </h2>
-        <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={incomeExpensesData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gradIngresos" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={COLORS.indigo} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={COLORS.indigo} stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="month" tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
-            <Tooltip
-              contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8 }}
-              labelStyle={{ color: "#e2e8f0" }}
-              itemStyle={{ color: "#cbd5e1" }}
-            />
-            <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13, color: "#94a3b8" }} />
-            <Area
-              type="monotone"
-              dataKey="ingresos"
-              name="Ingresos (UF)"
-              stroke={COLORS.indigo}
-              strokeWidth={2.5}
-              fill="url(#gradIngresos)"
-              dot={false}
-              activeDot={{ r: 5, fill: COLORS.indigo }}
-            />
-            <Line
-              type="monotone"
-              dataKey="gastos"
-              name="Gastos (UF)"
-              stroke={COLORS.rose}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 5, fill: COLORS.rose }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </motion.div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38, duration: 0.4 }}
-          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6"
-        >
-          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-5">
-            Tasa de Éxito por Especialidad
-          </h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart
-              data={specialtyData}
-              layout="vertical"
-              margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-              <XAxis
-                type="number"
-                domain={[0, 100]}
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `${v}%`}
-              />
-              <YAxis
-                type="category"
-                dataKey="specialty"
-                tick={{ fill: "#cbd5e1", fontSize: 12 }}
-                axisLine={false}
-                tickLine={false}
-                width={72}
-              />
-              <Tooltip
-                contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8 }}
-                labelStyle={{ color: "#e2e8f0" }}
-                itemStyle={{ color: "#cbd5e1" }}
-                formatter={(v: number) => [`${v}%`, "Tasa de éxito"]}
-              />
-              <Bar dataKey="rate" radius={[0, 4, 4, 0]} maxBarSize={20}>
-                {specialtyData.map((entry, index) => (
-                  <Cell
-                    key={index}
-                    fill={entry.rate >= 80 ? COLORS.emerald : entry.rate >= 70 ? COLORS.indigo : COLORS.amber}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs text-slate-400 uppercase tracking-wider">Clientes</span>
+          <span className="text-2xl font-bold text-white">{totalClientes}</span>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.44, duration: 0.4 }}
-          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6"
-        >
-          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-5">
-            Distribución de Casos por Etapa
-          </h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={distributionData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={3}
-                dataKey="value"
-              >
-                {distributionData.map((_, index) => (
-                  <Cell key={index} fill={distributionColors[index]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8 }}
-                labelStyle={{ color: "#e2e8f0" }}
-                itemStyle={{ color: "#cbd5e1" }}
-                formatter={(v: number) => [`${v}%`, ""]}
-              />
-              <Legend
-                wrapperStyle={{ paddingTop: 12, fontSize: 13, color: "#94a3b8" }}
-                formatter={(value) => <span style={{ color: "#94a3b8" }}>{value}</span>}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs text-slate-400 uppercase tracking-wider">Abogados</span>
+          <span className="text-2xl font-bold text-white">{abogados.length}</span>
+        </motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs text-slate-400 uppercase tracking-wider">Honorarios pendientes</span>
+          <span className="text-2xl font-bold text-amber-400">{formatUF(ingresosTotal - ingresosPagados)}</span>
+        </motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs text-slate-400 uppercase tracking-wider">Plazos este mes</span>
+          <span className="text-2xl font-bold text-white">{plazos.length}</span>
         </motion.div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.4 }}
-        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6"
-      >
-        <div className="flex items-center gap-2 mb-5">
-          <Users className="w-4 h-4 text-indigo-400" />
-          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-            Rendimiento por Abogado
-          </h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                {(
-                  [
-                    ["nombre", "Nombre"],
-                    ["especialidad", "Especialidad"],
-                    ["casosActivos", "Casos Activos"],
-                    ["tasaExito", "Tasa Éxito"],
-                    ["horasFacturables", "Horas Facturables"],
-                    ["ingresosGenerados", "Ingresos (UF)"],
-                    ["satisfaccion", "Satisfacción"],
-                  ] as [SortKey, string][]
-                ).map(([key, label]) => (
-                  <th
-                    key={key}
-                    onClick={() => handleSort(key)}
-                    className="pb-3 pr-4 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200 transition-colors whitespace-nowrap"
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      {label}
-                      <SortIcon col={key} />
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700/40">
-              {sortedAttorneys.map((a) => (
-                <tr key={a.nombre} className="hover:bg-slate-700/20 transition-colors">
-                  <td className="py-3 pr-4 font-medium text-slate-100 whitespace-nowrap">{a.nombre}</td>
-                  <td className="py-3 pr-4 text-slate-300 whitespace-nowrap">{a.especialidad}</td>
-                  <td className="py-3 pr-4 text-slate-300 text-center">{a.casosActivos}</td>
-                  <td className="py-3 pr-4">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${successBg(a.tasaExito)}`}>
-                      {a.tasaExito}%
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4 text-slate-300 text-center">{a.horasFacturables}h</td>
-                  <td className="py-3 pr-4 text-indigo-300 font-medium">{a.ingresosGenerados} UF</td>
-                  <td className="py-3 pr-4">
-                    <span
-                      className={`text-sm font-semibold ${
-                        a.satisfaccion >= 4.5
-                          ? "text-emerald-400"
-                          : a.satisfaccion >= 4.0
-                          ? "text-amber-400"
-                          : "text-rose-400"
-                      }`}
-                    >
-                      {a.satisfaccion.toFixed(1)}
-                    </span>
-                    <span className="text-slate-500 text-xs"> /5</span>
-                  </td>
+      {incomeExpensesData.length > 0 ? (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-5">Ingresos vs Gastos (UF)</h2>
+          <ResponsiveContainer width="100%" height={240}>
+            <AreaChart data={incomeExpensesData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradIngresos" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={COLORS.indigo} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={COLORS.indigo} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+              <XAxis dataKey="month" tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8 }} />
+              <Legend wrapperStyle={{ paddingTop: 16, fontSize: 13, color: "#94a3b8" }} />
+              <Area type="monotone" dataKey="ingresos" name="Ingresos (UF)" stroke={COLORS.indigo} strokeWidth={2.5} fill="url(#gradIngresos)" dot={false} />
+              <Area type="monotone" dataKey="gastos" name="Estimado gastos (UF)" stroke={COLORS.rose} strokeWidth={2} fill="none" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </motion.div>
+      ) : null}
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {specialtyData.length > 0 ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
+            className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-5">Casos por Especialidad</h2>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={specialtyData} layout="vertical" margin={{ top: 0, right: 24, left: 8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+                <XAxis type="number" tick={{ fill: "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="specialty" tick={{ fill: "#94a3b8", fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
+                <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8 }} />
+                <Bar dataKey="total" name="Total casos" fill={COLORS.indigo} radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </motion.div>
+        ) : null}
+
+        {distributionData.length > 0 ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}
+            className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-5">Distribución de Casos</h2>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={distributionData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                  {distributionData.map((_, index) => (
+                    <Cell key={index} fill={distributionColors[index % distributionColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8 }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: "#94a3b8" }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </motion.div>
+        ) : null}
+      </div>
+
+      {sortedAbogados.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Desempeño por Abogado</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-700/50">
+                  {[
+                    { key: "nombre", label: "Abogado" },
+                    { key: "especialidad", label: "Especialidad" },
+                    { key: "casosActivos", label: "Activos" },
+                    { key: "tasaExito", label: "Éxito %" },
+                    { key: "ingresosGenerados", label: "Ingresos (UF)" },
+                  ].map(col => (
+                    <th key={col.key} onClick={() => handleSort(col.key)}
+                      className="text-left py-2 px-3 text-slate-500 font-medium cursor-pointer hover:text-slate-300 transition-colors select-none">
+                      <span className="flex items-center gap-1">
+                        {col.label}
+                        {sortKey === col.key ? (sortDir === "asc" ? <ChevronUp className="w-3 h-3 text-indigo-400" /> : <ChevronDown className="w-3 h-3 text-indigo-400" />) : <ChevronUp className="w-3 h-3 opacity-20" />}
+                      </span>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.56, duration: 0.4 }}
-        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6"
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-4 h-4 text-violet-400" />
-          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-            Proyección de Ingresos
-          </h2>
-        </div>
-        <p className="text-xs text-slate-500 mb-5">
-          Proyección basada en casos activos y probabilidad de éxito
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-          {forecastMonths.map((m) => (
-            <div
-              key={m.label}
-              className="bg-slate-900/60 border border-slate-700/40 rounded-xl p-4 flex flex-col gap-2"
-            >
-              <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{m.label}</span>
-              <span className="text-2xl font-bold text-white">{m.uf} UF</span>
-              <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full w-fit"
-                style={{ backgroundColor: `${m.confidenceColor}18`, color: m.confidenceColor }}
-              >
-                Confianza {m.confidence}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-start gap-2 bg-slate-900/40 rounded-lg px-4 py-3">
-          <Target className="w-3.5 h-3.5 text-slate-500 mt-0.5 shrink-0" />
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Calculado con base en honorarios pendientes × probabilidad de resolución por tipo de causa
-          </p>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.62, duration: 0.4 }}
-        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-6"
-      >
-        <div className="flex items-center gap-2 mb-5">
-          <DollarSign className="w-4 h-4 text-cyan-400" />
-          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-            Análisis LTV — Top Clientes
-          </h2>
-        </div>
-        <div className="space-y-3">
-          {clientsLTV.map((c) => {
-            const pct = Math.round((c.total / maxLTV) * 100);
-            const avgPerCase = Math.round(c.total / c.cases);
-            return (
-              <div key={c.name} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-6 items-center">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-100 truncate">{c.name}</p>
-                  <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-700/60 overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${pct}%`, backgroundColor: COLORS.cyan }}
-                    />
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500">Casos</p>
-                  <p className="text-sm font-semibold text-slate-200">{c.cases}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500">Total</p>
-                  <p className="text-sm font-semibold text-cyan-300">{c.total} UF</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500">Prom/Caso</p>
-                  <p className="text-sm font-semibold text-slate-200">{avgPerCase} UF</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500">Último</p>
-                  <p className="text-sm text-slate-400">{c.lastActive}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.68, duration: 0.4 }}
-        className="space-y-3"
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-4 h-4 text-amber-400" />
-          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-            Alertas e Insights
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {insights.map((ins, i) => (
-            <motion.div
-              key={i}
-              custom={i}
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              className={`${ins.bg} border ${ins.border} rounded-xl p-4 flex gap-3 items-start`}
-            >
-              <ins.icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: ins.color }} />
-              <p className="text-sm text-slate-300 leading-relaxed">{ins.text}</p>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+              </thead>
+              <tbody>
+                {sortedAbogados.map((a, i) => (
+                  <tr key={i} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-2.5 px-3 text-slate-200 font-medium">{a.nombre}</td>
+                    <td className="py-2.5 px-3 text-slate-400">{a.especialidad}</td>
+                    <td className="py-2.5 px-3 text-slate-300">{a.casosActivos}</td>
+                    <td className="py-2.5 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${a.tasaExito >= 70 ? 'bg-emerald-500/10 text-emerald-400' : a.tasaExito >= 50 ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                        {a.tasaExito}%
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-300">{a.ingresosGenerados.toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

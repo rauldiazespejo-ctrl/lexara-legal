@@ -29,6 +29,7 @@ import Tribunales from './pages/Tribunales'
 import Biblioteca from './pages/Biblioteca'
 import Analytics from './pages/Analytics'
 import ClausulasRedactor from './pages/ClausulasRedactor'
+import TeoriaDelCaso from './pages/TeoriaDelCaso'
 
 function AppShell() {
   const { user } = useAuth()
@@ -65,6 +66,7 @@ function AppShell() {
               <Route path="/biblioteca" element={<Biblioteca />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/redactor-contratos" element={<ClausulasRedactor />} />
+              <Route path="/teoria-caso" element={<TeoriaDelCaso />} />
               <Route path="/configuracion" element={<Settings />} />
             </Routes>
           </div>

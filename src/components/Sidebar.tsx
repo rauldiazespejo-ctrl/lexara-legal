@@ -5,7 +5,7 @@ import {
   FileText, DollarSign, BookOpen, Scale, Settings,
   ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch,
   UserCheck, Hammer, Timer, Calculator, MapPin, Library, BarChart2, PenLine,
-  Zap, ChevronDown
+  Zap, ChevronDown, Brain
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAppData } from '../context/AppDataContext'
@@ -60,6 +60,7 @@ const NAV_SECTIONS = [
       { to: '/biblioteca', icon: Library, label: 'Biblioteca Jurídica' },
       { to: '/analisis', icon: ScanSearch, label: 'Análisis Contratos' },
       { to: '/redactor-contratos', icon: PenLine, label: 'Redactor Contratos' },
+      { to: '/teoria-caso', icon: Brain, label: 'Teoría del Caso IA' },
       { to: '/calculadoras', icon: Calculator, label: 'Calculadoras Legales' },
       { to: '/tribunales', icon: MapPin, label: 'Directorio Tribunales' },
     ],

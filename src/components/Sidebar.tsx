@@ -5,7 +5,7 @@ import {
   FileText, DollarSign, BookOpen, Scale, Settings,
   ChevronRight, Gavel, Heart, Building2, ShieldAlert, Receipt, ScanSearch,
   UserCheck, Hammer, Timer, Calculator, MapPin, Library, BarChart2, PenLine,
-  Zap, ChevronDown, Brain
+  Zap, ChevronDown, Brain, Menu, X
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAppData } from '../context/AppDataContext'
@@ -218,42 +218,138 @@ const BOTTOM_NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Inicio', exact: true },
   { to: '/casos', icon: Briefcase, label: 'Casos' },
   { to: '/plazos', icon: Clock, label: 'Plazos' },
-  { to: '/agenda', icon: CalendarDays, label: 'Agenda' },
+  { to: '/teoria-caso', icon: Brain, label: 'T.Caso IA' },
   { to: '/clientes', icon: Users, label: 'Clientes' },
+]
+
+const MAS_ITEMS = [
+  { section: 'Principal', items: [
+    { to: '/abogados', icon: UserCheck, label: 'Abogados' },
+    { to: '/agenda', icon: CalendarDays, label: 'Agenda Legal' },
+  ]},
+  { section: 'Especialidades', items: [
+    { to: '/civil', icon: Scale, label: 'Civil' },
+    { to: '/laboral', icon: Gavel, label: 'Laboral' },
+    { to: '/penal', icon: ShieldAlert, label: 'Penal' },
+    { to: '/familia', icon: Heart, label: 'Familia' },
+    { to: '/tributario', icon: Receipt, label: 'Tributario' },
+    { to: '/comercial', icon: Building2, label: 'Comercial' },
+    { to: '/ejecutivo', icon: Hammer, label: 'Ejecutivo' },
+  ]},
+  { section: 'Gestión', items: [
+    { to: '/honorarios', icon: DollarSign, label: 'Honorarios' },
+    { to: '/time-tracking', icon: Timer, label: 'Time Track' },
+    { to: '/documentos', icon: FileText, label: 'Documentos' },
+    { to: '/analytics', icon: BarChart2, label: 'Analytics' },
+  ]},
+  { section: 'Herramientas', items: [
+    { to: '/normativa', icon: BookOpen, label: 'Normativa' },
+    { to: '/biblioteca', icon: Library, label: 'Biblioteca' },
+    { to: '/analisis', icon: ScanSearch, label: 'Contratos' },
+    { to: '/redactor-contratos', icon: PenLine, label: 'Redactor' },
+    { to: '/calculadoras', icon: Calculator, label: 'Calculadoras' },
+    { to: '/tribunales', icon: MapPin, label: 'Tribunales' },
+    { to: '/configuracion', icon: Settings, label: 'Configuración' },
+  ]},
 ]
 
 export function BottomNav() {
   const { plazos } = useAppData()
   const plazosUrgentes = plazos.filter(p => p.alerta === 'critical' || p.alerta === 'high').length
+  const [masOpen, setMasOpen] = useState(false)
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-1 lg:hidden"
-      style={{
-        background: 'rgba(5,8,20,0.97)',
-        backdropFilter: 'blur(24px)',
-        borderTop: '1px solid rgba(255,255,255,0.07)',
-        paddingTop: '8px',
-        paddingBottom: 'max(8px,env(safe-area-inset-bottom))',
-        boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
-      }}>
-      {BOTTOM_NAV.map(({ to, icon: Icon, label, exact }) => (
-        <NavLink key={to} to={to} end={exact}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all relative ${isActive ? 'text-blue-400' : 'text-slate-600'}`
-          }>
-          {({ isActive }) => (
-            <>
-              <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-blue-500/15' : ''}`}>
-                <Icon size={19} />
+    <>
+      <AnimatePresence>
+        {masOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 lg:hidden"
+              style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+              onClick={() => setMasOpen(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 lg:hidden rounded-t-3xl overflow-hidden"
+              style={{ background: 'rgba(5,10,25,0.98)', border: '1px solid rgba(255,255,255,0.08)', maxHeight: '80vh' }}>
+              <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div>
+                  <p className="text-sm font-black text-white">Todos los módulos</p>
+                  <p className="text-[9px] text-slate-600">LEXARA PRO · NexusForge</p>
+                </div>
+                <button onClick={() => setMasOpen(false)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
+                  <X size={16} className="text-slate-400" />
+                </button>
               </div>
-              <span className="text-[9px] font-semibold">{label}</span>
-              {to === '/plazos' && plazosUrgentes > 0 && (
-                <span className="absolute top-0 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center bg-red-500 text-white">{plazosUrgentes}</span>
-              )}
-            </>
-          )}
-        </NavLink>
-      ))}
-    </nav>
+              <div className="overflow-y-auto pb-6" style={{ maxHeight: 'calc(80vh - 60px)' }}>
+                {MAS_ITEMS.map(section => (
+                  <div key={section.section} className="px-4 pt-4">
+                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-wider mb-2">{section.section}</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {section.items.map(item => {
+                        const Icon = item.icon
+                        return (
+                          <NavLink key={item.to} to={item.to}
+                            onClick={() => setMasOpen(false)}
+                            className={({ isActive }) =>
+                              `flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all text-center ${isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`
+                            }
+                            style={({ isActive }) => ({
+                              background: isActive ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.03)',
+                              border: `1px solid ${isActive ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                            })}>
+                            <Icon size={18} />
+                            <span className="text-[9px] font-semibold leading-tight">{item.label}</span>
+                          </NavLink>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-1 lg:hidden"
+        style={{
+          background: 'rgba(5,8,20,0.97)',
+          backdropFilter: 'blur(24px)',
+          borderTop: '1px solid rgba(255,255,255,0.07)',
+          paddingTop: '8px',
+          paddingBottom: 'max(8px,env(safe-area-inset-bottom))',
+          boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
+        }}>
+        {BOTTOM_NAV.map(({ to, icon: Icon, label, exact }) => (
+          <NavLink key={to} to={to} end={exact}
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all relative ${isActive ? 'text-blue-400' : 'text-slate-600'}`
+            }>
+            {({ isActive }) => (
+              <>
+                <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-blue-500/15' : ''}`}>
+                  <Icon size={18} />
+                </div>
+                <span className="text-[9px] font-semibold">{label}</span>
+                {to === '/plazos' && plazosUrgentes > 0 && (
+                  <span className="absolute top-0 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center bg-red-500 text-white">{plazosUrgentes}</span>
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
+        <button onClick={() => setMasOpen(v => !v)}
+          className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all text-slate-600 hover:text-slate-300">
+          <div className={`p-1.5 rounded-xl transition-all ${masOpen ? 'bg-indigo-500/15 text-indigo-400' : ''}`}>
+            <Menu size={18} />
+          </div>
+          <span className="text-[9px] font-semibold">Más</span>
+        </button>
+      </nav>
+    </>
   )
 }
 

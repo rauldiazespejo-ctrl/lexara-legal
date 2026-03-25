@@ -13,10 +13,11 @@ import { extractTextFromFile } from '../utils/extractText'
 
 // ── Modelos IA ────────────────────────────────────────────────────────────────
 const MODELOS = [
-  { id: 'gpt4o', label: 'GPT-4o', proveedor: 'OpenAI', color: '#10a37f', keyName: 'lexara_openai_key', modelo: 'gpt-4o' },
-  { id: 'gpt4omini', label: 'GPT-4o Mini', proveedor: 'OpenAI', color: '#34d399', keyName: 'lexara_openai_key', modelo: 'gpt-4o-mini' },
-  { id: 'claude', label: 'Claude 3.5', proveedor: 'Anthropic', color: '#f59e0b', keyName: 'lexara_anthropic_key', modelo: 'claude-3-5-sonnet-20241022' },
-  { id: 'gemini', label: 'Gemini 1.5', proveedor: 'Google', color: '#4285f4', keyName: 'lexara_gemini_key', modelo: 'gemini-1.5-pro' },
+  { id: 'groq', label: 'Groq · Llama 3.3', proveedor: 'Groq (GRATIS)', color: '#22c55e', keyName: 'lexara_groq_key', modelo: 'llama-3.3-70b-versatile', gratis: true },
+  { id: 'deepseek', label: 'DeepSeek R1', proveedor: 'DeepSeek (Bajo costo)', color: '#06b6d4', keyName: 'lexara_deepseek_key', modelo: 'deepseek-reasoner', gratis: true },
+  { id: 'gpt4o', label: 'GPT-4o', proveedor: 'OpenAI', color: '#10a37f', keyName: 'lexara_openai_key', modelo: 'gpt-4o', gratis: false },
+  { id: 'claude', label: 'Claude 3.5', proveedor: 'Anthropic', color: '#f59e0b', keyName: 'lexara_anthropic_key', modelo: 'claude-3-5-sonnet-20241022', gratis: false },
+  { id: 'gemini', label: 'Gemini 1.5', proveedor: 'Google', color: '#4285f4', keyName: 'lexara_gemini_key', modelo: 'gemini-1.5-pro', gratis: false },
 ]
 
 // ── Prompt estructurado ────────────────────────────────────────────────────────
@@ -128,7 +129,47 @@ async function callGemini(texto: string, apiKey: string) {
   return JSON.parse(raw)
 }
 
-// ── Análisis demo sin API ─────────────────────────────────────────────────────
+async function callGroq(texto: string, apiKey: string) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.1,
+      max_tokens: 8000,
+      messages: [
+        { role: 'system', content: 'Eres LEXARA IA, abogado experto en derecho chileno. Responde ÚNICAMENTE con JSON válido y nada más, sin markdown ni explicaciones.' },
+        { role: 'user', content: buildPrompt(texto) },
+      ],
+    }),
+  })
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message ?? `Groq error ${res.status}`) }
+  const d = await res.json()
+  const raw = d.choices[0].message.content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  return JSON.parse(raw)
+}
+
+async function callDeepSeek(texto: string, apiKey: string) {
+  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      temperature: 0.1,
+      max_tokens: 8000,
+      messages: [
+        { role: 'system', content: 'Eres LEXARA IA, abogado experto en derecho chileno. Responde ÚNICAMENTE con JSON válido y nada más.' },
+        { role: 'user', content: buildPrompt(texto) },
+      ],
+    }),
+  })
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message ?? `DeepSeek error ${res.status}`) }
+  const d = await res.json()
+  const raw = d.choices[0].message.content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  return JSON.parse(raw)
+}
+
+
 function analisisDemo(texto: string): any {
   const lower = texto.toLowerCase()
   const tieneArbitraje = lower.includes('árbitro') || lower.includes('cam') || lower.includes('arbitraje')
@@ -392,8 +433,12 @@ export default function InformeLegal() {
       const apiKey = localStorage.getItem(modelo.keyName) ?? ''
 
       if (!apiKey) {
-        await new Promise(r => setTimeout(r, 2500))
-        parsed = analisisDemo(texto)
+        setErrorMsg('Configura una API Key gratuita de Groq en Configuración → APIs de IA para activar el análisis real. Obtén tu clave gratis en console.groq.com')
+        setEstado('error'); return
+      } else if (modeloId === 'groq') {
+        parsed = await callGroq(texto, apiKey)
+      } else if (modeloId === 'deepseek') {
+        parsed = await callDeepSeek(texto, apiKey)
       } else if (modeloId === 'claude') {
         parsed = await callAnthropic(texto, apiKey)
       } else if (modeloId === 'gemini') {
@@ -458,7 +503,7 @@ export default function InformeLegal() {
       {/* Modelo IA */}
       <div>
         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Motor de análisis</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {MODELOS.map(m => {
             const hasKey = !!localStorage.getItem(m.keyName)
             return (
@@ -472,6 +517,7 @@ export default function InformeLegal() {
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <div className="w-2 h-2 rounded-full" style={{ background: m.color }} />
                   <span className="text-[10px] font-black text-white">{m.label}</span>
+                  {m.gratis && <span className="text-[7px] font-black px-1 py-0 rounded" style={{ background: '#22c55e22', color: '#22c55e' }}>GRATIS</span>}
                   {hasKey
                     ? <Unlock size={8} className="ml-auto" style={{ color: m.color }} />
                     : <Lock size={8} className="ml-auto text-slate-700" />
@@ -483,10 +529,14 @@ export default function InformeLegal() {
           })}
         </div>
         {!tieneKey && (
-          <p className="mt-2 text-[10px] text-yellow-500/80 flex items-center gap-1.5 px-1">
-            <Zap size={9} />
-            Sin API Key → modo demostración activo. Configura tu clave en el módulo "Mejorar con IA"
-          </p>
+          <div className="mt-2 p-2.5 rounded-xl flex items-start gap-2"
+            style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)' }}>
+            <Zap size={11} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] text-emerald-400 font-bold">Groq es 100% gratuito</p>
+              <p className="text-[9px] text-slate-500">Obtén tu API Key gratis en <span className="text-emerald-400">console.groq.com</span> → configúrala en <span className="text-emerald-400">Configuración → APIs de IA</span></p>
+            </div>
+          </div>
         )}
       </div>
 

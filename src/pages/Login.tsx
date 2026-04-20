@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Zap, ArrowRight, Shield } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 function FloatingParticle({ x, y, delay }: { x: number; y: number; delay: number }) {
@@ -72,7 +72,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     await new Promise(r => setTimeout(r, 800))
-    const result = login(email, password)
+    const result = await login(email, password)
     setLoading(false)
     if (!result.ok) setError(result.error ?? 'Credenciales incorrectas')
   }
@@ -222,17 +222,7 @@ export default function Login() {
           </form>
         </motion.div>
 
-        {/* Super admin hint */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-          className="flex items-center gap-2 p-3 rounded-2xl mx-1 mt-3"
-          style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.12)' }}>
-          <Shield size={11} className="text-indigo-500 flex-shrink-0" />
-          <p className="text-[10px] text-slate-600">
-            SuperAdmin: <span className="text-indigo-500 font-semibold">rauldiazespejo@gmail.com</span>
-          </p>
-        </motion.div>
-
-        <p className="text-center text-[9px] text-slate-800 mt-4 tracking-wider">
+        <p className="text-center text-[9px] text-slate-800 mt-6 tracking-wider">
           LEXARA Legal Intelligence v2.0 · Datos protegidos · Chile
         </p>
       </motion.div>

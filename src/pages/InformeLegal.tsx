@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDropzone } from 'react-dropzone'
 import {
@@ -10,10 +10,25 @@ import {
 } from 'lucide-react'
 import { downloadInformeLegal, type InformeLegalData, type RiesgoInforme } from '../utils/informeLegalGenerator'
 import { extractTextFromFile } from '../utils/extractText'
+import { getGroqChatModelId } from '../services/groqModels'
+import {
+  getZaiChatModelId,
+  getKimiChatModelId,
+  getQwenChatModelId,
+  ZAI_CHAT_URL,
+  KIMI_CHAT_URL,
+  QWEN_CHAT_URL,
+  LEXARA_ZAI_MODEL_CHANGED,
+  LEXARA_KIMI_MODEL_CHANGED,
+  LEXARA_QWEN_MODEL_CHANGED,
+} from '../services/asiaAiModels'
 
 // ── Modelos IA ────────────────────────────────────────────────────────────────
 const MODELOS = [
-  { id: 'groq', label: 'Groq · Llama 3.3', proveedor: 'Groq (GRATIS)', color: '#22c55e', keyName: 'lexara_groq_key', modelo: 'llama-3.3-70b-versatile', gratis: true },
+  { id: 'groq', label: 'Groq', proveedor: 'Modelo en Configuración (GRATIS)', color: '#22c55e', keyName: 'lexara_groq_key', modelo: 'dynamic', gratis: true },
+  { id: 'zai', label: 'Z.AI · GLM', proveedor: '智谱 · modelo en Configuración', color: '#a855f7', keyName: 'lexara_zai_key', modelo: 'dynamic', gratis: true },
+  { id: 'kimi', label: 'Kimi', proveedor: 'Moonshot · modelo en Configuración', color: '#38bdf8', keyName: 'lexara_kimi_key', modelo: 'dynamic', gratis: true },
+  { id: 'qwen', label: 'Qwen', proveedor: 'DashScope intl. · Configuración', color: '#fb923c', keyName: 'lexara_qwen_key', modelo: 'dynamic', gratis: true },
   { id: 'deepseek', label: 'DeepSeek R1', proveedor: 'DeepSeek (Bajo costo)', color: '#06b6d4', keyName: 'lexara_deepseek_key', modelo: 'deepseek-reasoner', gratis: true },
   { id: 'gpt4o', label: 'GPT-4o', proveedor: 'OpenAI', color: '#10a37f', keyName: 'lexara_openai_key', modelo: 'gpt-4o', gratis: false },
   { id: 'claude', label: 'Claude 3.5', proveedor: 'Anthropic', color: '#f59e0b', keyName: 'lexara_anthropic_key', modelo: 'claude-3-5-sonnet-20241022', gratis: false },
@@ -129,12 +144,12 @@ async function callGemini(texto: string, apiKey: string) {
   return JSON.parse(raw)
 }
 
-async function callGroq(texto: string, apiKey: string) {
+async function callGroq(texto: string, apiKey: string, modelId = getGroqChatModelId()) {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: modelId,
       temperature: 0.1,
       max_tokens: 8000,
       messages: [
@@ -147,6 +162,54 @@ async function callGroq(texto: string, apiKey: string) {
   const d = await res.json()
   const raw = d.choices[0].message.content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
   return JSON.parse(raw)
+}
+
+const OPENAI_JSON_SYSTEM = 'Eres LEXARA IA, abogado experto en derecho chileno. Responde ÚNICAMENTE con JSON válido y nada más, sin markdown ni explicaciones.'
+
+async function callOpenAiCompatChat(
+  url: string,
+  apiKey: string,
+  modelId: string,
+  texto: string,
+  extraHeaders?: Record<string, string>,
+) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+      ...extraHeaders,
+    },
+    body: JSON.stringify({
+      model: modelId,
+      temperature: 0.1,
+      max_tokens: 8000,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: OPENAI_JSON_SYSTEM },
+        { role: 'user', content: buildPrompt(texto) },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}))
+    throw new Error(e.error?.message ?? `API error ${res.status}`)
+  }
+  const d = await res.json()
+  const raw = d.choices[0].message.content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  return JSON.parse(raw)
+}
+
+async function callZai(texto: string, apiKey: string, modelId = getZaiChatModelId()) {
+  return callOpenAiCompatChat(ZAI_CHAT_URL, apiKey, modelId, texto, { 'Accept-Language': 'en-US,en' })
+}
+
+async function callKimi(texto: string, apiKey: string, modelId = getKimiChatModelId()) {
+  return callOpenAiCompatChat(KIMI_CHAT_URL, apiKey, modelId, texto)
+}
+
+async function callQwen(texto: string, apiKey: string, modelId = getQwenChatModelId()) {
+  return callOpenAiCompatChat(QWEN_CHAT_URL, apiKey, modelId, texto)
 }
 
 async function callDeepSeek(texto: string, apiKey: string) {
@@ -378,7 +441,35 @@ function VistaInforme({ data, onDescargar, onNuevo, cargandoDocx }: {
 
 // ── Componente principal ───────────────────────────────────────────────────────
 export default function InformeLegal() {
-  const [modeloId, setModeloId] = useState('gpt4o')
+  const [modeloId, setModeloId] = useState('groq')
+  const [modelConfigRev, setModelConfigRev] = useState(0)
+
+  useEffect(() => {
+    const onChange = () => setModelConfigRev(n => n + 1)
+    window.addEventListener('lexara-groq-model-changed', onChange)
+    window.addEventListener(LEXARA_ZAI_MODEL_CHANGED, onChange)
+    window.addEventListener(LEXARA_KIMI_MODEL_CHANGED, onChange)
+    window.addEventListener(LEXARA_QWEN_MODEL_CHANGED, onChange)
+    window.addEventListener('storage', onChange)
+    return () => {
+      window.removeEventListener('lexara-groq-model-changed', onChange)
+      window.removeEventListener(LEXARA_ZAI_MODEL_CHANGED, onChange)
+      window.removeEventListener(LEXARA_KIMI_MODEL_CHANGED, onChange)
+      window.removeEventListener(LEXARA_QWEN_MODEL_CHANGED, onChange)
+      window.removeEventListener('storage', onChange)
+    }
+  }, [])
+
+  const activeConfiguredModelId =
+    modeloId === 'groq'
+      ? getGroqChatModelId()
+      : modeloId === 'zai'
+        ? getZaiChatModelId()
+        : modeloId === 'kimi'
+          ? getKimiChatModelId()
+          : modeloId === 'qwen'
+            ? getQwenChatModelId()
+            : ''
   const [archivo, setArchivo] = useState<File | null>(null)
   const [textoManual, setTextoManual] = useState('')
   const [inputMode, setInputMode] = useState<'archivo' | 'texto'>('texto')
@@ -433,10 +524,22 @@ export default function InformeLegal() {
       const apiKey = localStorage.getItem(modelo.keyName) ?? ''
 
       if (!apiKey) {
-        setErrorMsg('Configura una API Key gratuita de Groq en Configuración → APIs de IA para activar el análisis real. Obtén tu clave gratis en console.groq.com')
+        const hint =
+          modeloId === 'groq'
+            ? 'Configura tu API Key gratuita de Groq en Configuración → Centro de conexión IA. console.groq.com'
+            : ['zai', 'kimi', 'qwen'].includes(modeloId)
+              ? 'Configura la API Key en Configuración → Centro de conexión IA (Z.AI, Kimi o Qwen) y pulsa conectar.'
+              : 'Configura la API Key de este proveedor en Configuración → Centro de conexión IA.'
+        setErrorMsg(hint)
         setEstado('error'); return
       } else if (modeloId === 'groq') {
         parsed = await callGroq(texto, apiKey)
+      } else if (modeloId === 'zai') {
+        parsed = await callZai(texto, apiKey)
+      } else if (modeloId === 'kimi') {
+        parsed = await callKimi(texto, apiKey)
+      } else if (modeloId === 'qwen') {
+        parsed = await callQwen(texto, apiKey)
       } else if (modeloId === 'deepseek') {
         parsed = await callDeepSeek(texto, apiKey)
       } else if (modeloId === 'claude') {
@@ -503,7 +606,7 @@ export default function InformeLegal() {
       {/* Modelo IA */}
       <div>
         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Motor de análisis</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {MODELOS.map(m => {
             const hasKey = !!localStorage.getItem(m.keyName)
             return (
@@ -528,14 +631,31 @@ export default function InformeLegal() {
             )
           })}
         </div>
-        {!tieneKey && (
+        {['groq', 'zai', 'kimi', 'qwen'].includes(modeloId) && (
+          <p key={modelConfigRev} className="mt-1.5 text-[9px] text-slate-600 font-mono">
+            Modelo activo:{' '}
+            <span style={{ color: MODELOS.find(m => m.id === modeloId)?.color ?? '#94a3b8' }}>{activeConfiguredModelId}</span> ·
+            Configuración → Centro IA
+          </p>
+        )}
+        {modeloId === 'groq' && !tieneKey && (
           <div className="mt-2 p-2.5 rounded-xl flex items-start gap-2"
             style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)' }}>
             <Zap size={11} className="text-emerald-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-[10px] text-emerald-400 font-bold">Groq es 100% gratuito</p>
-              <p className="text-[9px] text-slate-500">Obtén tu API Key gratis en <span className="text-emerald-400">console.groq.com</span> → configúrala en <span className="text-emerald-400">Configuración → APIs de IA</span></p>
+              <p className="text-[9px] text-slate-500">Obtén tu API Key gratis en <span className="text-emerald-400">console.groq.com</span> → <span className="text-emerald-400">Configuración</span>: guarda clave, conecta y elige modelo.</p>
             </div>
+          </div>
+        )}
+        {['zai', 'kimi', 'qwen'].includes(modeloId) && !tieneKey && (
+          <div className="mt-2 p-2.5 rounded-xl flex items-start gap-2"
+            style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}>
+            <Brain size={11} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+            <p className="text-[9px] text-slate-500">
+              Conecta <span className="text-indigo-300 font-semibold">{modelo.label}</span> en{' '}
+              <span className="text-indigo-400">Configuración → Centro de conexión IA</span> (guardar API key y cargar modelos).
+            </p>
           </div>
         )}
       </div>

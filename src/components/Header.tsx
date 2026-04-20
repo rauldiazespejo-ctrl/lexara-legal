@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, Search, LogOut, Shield, ChevronDown, Zap, Settings, User } from 'lucide-react'
+import { Bell, Search, LogOut, ChevronDown, Zap, Settings } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useState, useEffect } from 'react'
+import { useUf } from '../context/UfContext'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 function NexusForgeLogo({ size = 32 }: { size?: number }) {
   return (
@@ -14,18 +15,16 @@ function NexusForgeLogo({ size = 32 }: { size?: number }) {
 }
 
 function UFIndicator() {
-  const [uf, setUf] = useState(38012)
-  useEffect(() => {
-    const drift = Math.floor(Math.random() * 40 - 20)
-    setUf(38012 + drift)
-  }, [])
+  const { ufClp, loading, error, fecha, fuente } = useUf()
   return (
     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
+      title={fecha ? `UF ${fecha} · ${fuente}` : fuente}
       className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-default select-none"
       style={{ background: 'rgba(234,179,8,0.07)', border: '1px solid rgba(234,179,8,0.18)' }}>
-      <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+      <div className={`w-1.5 h-1.5 rounded-full bg-yellow-400 ${loading ? 'animate-pulse' : ''}`} />
       <span className="text-[10px] font-black text-yellow-500 tracking-wider">UF</span>
-      <span className="text-xs font-bold text-slate-200">${uf.toLocaleString('es-CL')}</span>
+      <span className="text-xs font-bold text-slate-200">${ufClp.toLocaleString('es-CL')}</span>
+      {error && <span className="text-[8px] text-slate-600 max-w-[72px] truncate">{error}</span>}
     </motion.div>
   )
 }
@@ -34,6 +33,23 @@ export default function Header() {
   const { user, isSuperAdmin, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [notifCount] = useState(3)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  const focusSearch = useCallback(() => {
+    searchRef.current?.focus()
+    searchRef.current?.select()
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        focusSearch()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [focusSearch])
 
   return (
     <>
@@ -62,8 +78,8 @@ export default function Header() {
         {/* Search bar */}
         <div className="hidden md:flex flex-1 max-w-md relative ml-4">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
-          <input placeholder="Buscar causa, cliente, RUT..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs text-slate-300 placeholder-slate-600 outline-none transition-all"
+          <input ref={searchRef} data-global-search placeholder="Buscar causa, cliente, RUT..."
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs text-slate-300 placeholder-slate-600 outline-none transition-all focus:ring-2 focus:ring-indigo-500/30"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
             onFocus={e => { e.target.style.borderColor = 'rgba(99,102,241,0.4)'; e.target.style.background = 'rgba(99,102,241,0.05)' }}
             onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; e.target.style.background = 'rgba(255,255,255,0.04)' }}

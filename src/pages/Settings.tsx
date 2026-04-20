@@ -1,13 +1,23 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Settings as SettingsIcon, Bell, Shield, Palette, Database, HelpCircle, LogOut, ChevronRight, Check, RefreshCw, Key, Eye, EyeOff, ExternalLink, Zap, Lock, Unlock } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useUf } from '../context/UfContext'
+import { useAuth } from '../context/AuthContext'
+import GroqModelHub from '../components/GroqModelHub'
+import OpenAiCompatModelHub from '../components/OpenAiCompatModelHub'
+import {
+  fetchZaiModels,
+  fetchKimiModels,
+  fetchQwenModels,
+  getZaiChatModelId,
+  setZaiChatModelId,
+  getKimiChatModelId,
+  setKimiChatModelId,
+  getQwenChatModelId,
+  setQwenChatModelId,
+} from '../services/asiaAiModels'
 
-const SUPER_ADMIN = {
-  nombre: 'Raúl Díaz Espejo',
-  email: 'rauldiazespejo@gmail.com',
-  rol: 'Super Administrador',
-  colegio: 'LEXARA PRO · NexusForge',
-}
+const ASIA_KEY_NAMES = ['lexara_zai_key', 'lexara_kimi_key', 'lexara_qwen_key'] as const
 
 const API_CONFIGS = [
   {
@@ -137,61 +147,26 @@ function APIKeyRow({ cfg }: { cfg: typeof API_CONFIGS[0] }) {
   )
 }
 
-async function fetchUF(): Promise<number | null> {
-  try {
-    const res = await fetch('https://mindicador.cl/api/uf')
-    const data = await res.json()
-    return data?.serie?.[0]?.valor ?? null
-  } catch {
-    return null
-  }
-}
-
-function useUFValue() {
-  const [uf, setUf] = useState<number>(() => {
-    const cached = localStorage.getItem('lexara_uf_value')
-    const ts = localStorage.getItem('lexara_uf_ts')
-    if (cached && ts && (Date.now() - parseInt(ts)) / 1000 / 3600 < 6) return parseFloat(cached)
-    return 0
-  })
-  const [loading, setLoading] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState<string>(() => {
-    const ts = localStorage.getItem('lexara_uf_ts')
-    return ts ? new Date(parseInt(ts)).toLocaleString('es-CL') : '—'
-  })
-
-  async function refresh() {
-    setLoading(true)
-    const val = await fetchUF()
-    if (val) {
-      setUf(val)
-      const now = Date.now()
-      localStorage.setItem('lexara_uf_value', val.toString())
-      localStorage.setItem('lexara_uf_ts', now.toString())
-      setLastUpdate(new Date(now).toLocaleString('es-CL'))
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    const cached = localStorage.getItem('lexara_uf_value')
-    const ts = localStorage.getItem('lexara_uf_ts')
-    const ageHours = ts ? (Date.now() - parseInt(ts)) / 1000 / 3600 : 99
-    if (!cached || ageHours >= 6) refresh()
-  }, [])
-
-  return { uf, loading, lastUpdate, refresh }
-}
-
 export default function Settings() {
+  const { user, isSuperAdmin, logout } = useAuth()
   const [notifPlazos, setNotifPlazos] = useState(true)
   const [notifAudiencias, setNotifAudiencias] = useState(true)
   const [diasAlerta, setDiasAlerta] = useState('5')
   const [apiTabOpen, setApiTabOpen] = useState(true)
-  const { uf, loading, lastUpdate, refresh } = useUFValue()
+  const { ufClp, loading, fecha, fuente, error: ufError, refetch } = useUf()
+  const fechaSerie = fecha ?? '—'
 
-  const initials = SUPER_ADMIN.nombre.split(' ').slice(0, 2).map(w => w[0]).join('')
-  const keysConfigured = API_CONFIGS.filter(c => !!localStorage.getItem(c.keyName)).length
+  const displayName = user?.nombre ?? 'Usuario'
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .join('') || 'LX'
+  const roleLabel = isSuperAdmin ? 'Super administrador' : user?.rol === 'admin' ? 'Administrador' : 'Abogado'
+  const keysConfigured =
+    API_CONFIGS.filter(c => !!localStorage.getItem(c.keyName)).length +
+    ASIA_KEY_NAMES.filter(k => !!localStorage.getItem(k)).length
 
   return (
     <div className="space-y-4">
@@ -202,19 +177,19 @@ export default function Settings() {
           </div>
           <h1 className="text-xl font-black text-white">Configuración</h1>
         </div>
-        <p className="text-xs text-slate-500">Perfil, APIs de IA y preferencias del sistema</p>
+        <p className="text-xs text-slate-500">Perfil, centro IA (Groq, Z.AI GLM, Kimi, Qwen) y preferencias</p>
       </motion.div>
 
       {/* Perfil */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl p-4 flex items-center gap-3" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(99,102,241,0.2)' }}>
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-base font-black text-white flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}>{initials}</div>
+          style={{ background: isSuperAdmin ? 'linear-gradient(135deg,#4f46e5,#f59e0b)' : 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}>{initials}</div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-white">{SUPER_ADMIN.nombre}</p>
-          <p className="text-[10px] text-indigo-400 font-semibold">{SUPER_ADMIN.rol}</p>
-          <p className="text-[10px] text-slate-500">{SUPER_ADMIN.email}</p>
-          <p className="text-[10px] text-slate-600 mt-0.5">{SUPER_ADMIN.colegio}</p>
+          <p className="text-sm font-black text-white truncate">{displayName}</p>
+          <p className="text-[10px] text-indigo-400 font-semibold capitalize">{roleLabel}</p>
+          <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
+          <p className="text-[10px] text-slate-600 mt-0.5">LEXARA PRO · Derecho chileno</p>
         </div>
       </motion.div>
 
@@ -222,14 +197,17 @@ export default function Settings() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         className="rounded-2xl p-3.5 flex items-center gap-3" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
         <div className="flex-1">
-          <p className="text-xs font-bold text-emerald-400">UF (Valor actualizado · mindicador.cl)</p>
-          <p className="text-[9px] text-slate-600">Última actualización: {lastUpdate}</p>
+          <p className="text-xs font-bold text-emerald-400">UF ({fuente})</p>
+          <p className="text-[9px] text-slate-600">
+            Fecha serie: {fechaSerie}
+            {ufError ? ` · ${ufError}` : ''}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <p className="text-sm font-black text-emerald-400">
-            {uf > 0 ? `$${uf.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+            {ufClp > 0 ? `$${ufClp.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
           </p>
-          <button onClick={refresh} disabled={loading}
+          <button type="button" onClick={() => void refetch()} disabled={loading}
             className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors disabled:opacity-50">
             <RefreshCw size={12} className={`text-emerald-400 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -246,8 +224,10 @@ export default function Settings() {
             <Key size={13} className="text-indigo-400" />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-xs font-bold text-white">APIs de Inteligencia Artificial</p>
-            <p className="text-[9px] text-slate-500">{keysConfigured}/{API_CONFIGS.length} claves configuradas · Groq gratis recomendado</p>
+            <p className="text-xs font-bold text-white">Centro de conexión IA</p>
+            <p className="text-[9px] text-slate-500">
+              {keysConfigured} claves activas · Groq / Z.AI / Kimi / Qwen: conectar y elegir modelo
+            </p>
           </div>
           {apiTabOpen
             ? <ChevronRight size={14} className="text-slate-600 rotate-90 transition-transform" />
@@ -263,12 +243,70 @@ export default function Settings() {
                   style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.15)' }}>
                   <Zap size={11} className="text-emerald-400 flex-shrink-0 mt-0.5" />
                   <p className="text-[9px] text-slate-400 leading-relaxed">
-                    Configura <span className="text-emerald-400 font-bold">Groq (GRATIS)</span> primero — activa análisis de contratos, Teoría del Caso y Redactor sin costo alguno. Las claves se guardan solo en tu dispositivo.
+                    <span className="text-emerald-400 font-bold">Groq</span> gratis ·{' '}
+                    <span className="text-violet-300 font-bold">Z.AI</span> (GLM) ·{' '}
+                    <span className="text-sky-300 font-bold">Kimi</span> (Moonshot) ·{' '}
+                    <span className="text-orange-300 font-bold">Qwen</span> (DashScope intl.) — claves solo en tu dispositivo.
                   </p>
                 </div>
-                {API_CONFIGS.map(cfg => (
-                  <APIKeyRow key={cfg.id} cfg={cfg} />
-                ))}
+                <OpenAiCompatModelHub
+                  title="Z.AI (智谱 GLM)"
+                  subtitle="API compatible OpenAI · modelos GLM (glm-5.1, glm-4.6…)"
+                  keyName="lexara_zai_key"
+                  placeholder="API Key Z.AI…"
+                  color="#a855f7"
+                  badge="GLM"
+                  badgeColor="#c084fc"
+                  link="https://z.ai"
+                  linkLabel="z.ai"
+                  getSelectedModelId={getZaiChatModelId}
+                  setSelectedModelId={setZaiChatModelId}
+                  fetchModels={fetchZaiModels}
+                  onConnectSuccessHint="Si el listado falla, se muestran modelos GLM recomendados por defecto."
+                />
+                <OpenAiCompatModelHub
+                  title="Kimi (Moonshot)"
+                  subtitle="Kimi K2.5, moonshot-v1 · API api.moonshot.ai"
+                  keyName="lexara_kimi_key"
+                  placeholder="sk-… (Moonshot / Kimi)"
+                  color="#38bdf8"
+                  badge="KIMI"
+                  badgeColor="#7dd3fc"
+                  link="https://platform.moonshot.ai"
+                  linkLabel="platform.moonshot.ai"
+                  getSelectedModelId={getKimiChatModelId}
+                  setSelectedModelId={setKimiChatModelId}
+                  fetchModels={fetchKimiModels}
+                />
+                <OpenAiCompatModelHub
+                  title="Qwen (DashScope)"
+                  subtitle="Model Studio internacional (Singapur) · qwen-plus, qwen-turbo…"
+                  keyName="lexara_qwen_key"
+                  placeholder="sk-… (DashScope / Alibaba)"
+                  color="#fb923c"
+                  badge="QWEN"
+                  badgeColor="#fdba74"
+                  link="https://modelstudio.console.alibabacloud.com"
+                  linkLabel="Model Studio"
+                  getSelectedModelId={getQwenChatModelId}
+                  setSelectedModelId={setQwenChatModelId}
+                  fetchModels={fetchQwenModels}
+                  onConnectSuccessHint="Clave de la región internacional; base Singapore compatible-mode."
+                />
+                {API_CONFIGS.map(cfg =>
+                  cfg.id === 'groq' ? (
+                    <GroqModelHub
+                      key={cfg.id}
+                      color={cfg.color}
+                      badgeColor={cfg.badgeColor}
+                      link={cfg.link}
+                      linkLabel={cfg.linkLabel}
+                      placeholder={cfg.placeholder}
+                    />
+                  ) : (
+                    <APIKeyRow key={cfg.id} cfg={cfg} />
+                  ),
+                )}
               </div>
             </motion.div>
           )}
@@ -341,7 +379,10 @@ export default function Settings() {
         <p className="text-[9px] text-slate-800 mt-0.5">Arquitectura y desarrollo por NexusForge</p>
       </div>
 
-      <button className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold text-red-400 transition-all hover:bg-red-500/10"
+      <button
+        type="button"
+        onClick={() => logout()}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold text-red-400 transition-all hover:bg-red-500/10"
         style={{ border: '1px solid rgba(239,68,68,0.15)' }}>
         <LogOut size={13} />Cerrar sesión
       </button>

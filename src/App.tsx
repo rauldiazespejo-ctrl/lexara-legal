@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider } from './context/AppDataContext'
+import { UfProvider } from './context/UfContext'
 import Header from './components/Header'
 import { Sidebar, BottomNav } from './components/Sidebar'
 import Login from './pages/Login'
@@ -31,16 +32,23 @@ import Analytics from './pages/Analytics'
 import ClausulasRedactor from './pages/ClausulasRedactor'
 import TeoriaDelCaso from './pages/TeoriaDelCaso'
 
+function routerBasename(): string | undefined {
+  const b = import.meta.env.BASE_URL
+  if (b === '/' || !b) return undefined
+  return b.endsWith('/') ? b.slice(0, -1) : b
+}
+
 function AppShell() {
   const { user } = useAuth()
   if (!user) return <Login />
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename()}>
+      <UfProvider>
       <div className="min-h-screen" style={{ background: 'radial-gradient(ellipse at top left,#0d1b3e 0%,#06090e 55%)' }}>
         <Header />
         <Sidebar />
         <main className="pt-14 pb-20 lg:pb-0 lg:ml-60 min-h-screen">
-          <div className="p-4 md:p-5 max-w-5xl mx-auto">
+          <div className="p-4 md:p-6 max-w-6xl mx-auto w-full">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/clientes" element={<Clientes />} />
@@ -73,6 +81,7 @@ function AppShell() {
         </main>
         <BottomNav />
       </div>
+      </UfProvider>
     </BrowserRouter>
   )
 }

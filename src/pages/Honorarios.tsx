@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DollarSign, TrendingUp, Clock, CheckCircle, AlertTriangle, Download, Trash2, Edit2, X, Save, Plus } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { UF_VALOR_CLP, DASHBOARD_DATA } from '../data/appData'
+import { DASHBOARD_DATA } from '../data/appData'
 import type { Honorario } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { useAppData } from '../context/AppDataContext'
+import { useUf } from '../context/UfContext'
 
 const ESTADO_CONFIG = {
   pagado:   { color: '#22c55e', bg: 'rgba(34,197,94,0.12)',   label: 'Pagado' },
@@ -16,6 +17,7 @@ const ESTADO_CONFIG = {
 
 export default function Honorarios() {
   const { canDelete, canCreate } = useAuth()
+  const { ufClp, fecha, fuente, error: ufError } = useUf()
   const { honorarios, addHonorario, updateHonorario, deleteHonorario } = useAppData()
   const [filter, setFilter] = useState<'todos' | keyof typeof ESTADO_CONFIG>('todos')
   const [editTarget, setEditTarget] = useState<Honorario | null>(null)
@@ -37,7 +39,7 @@ export default function Honorarios() {
         className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black text-white">Honorarios</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Facturación en UF · Valor UF hoy: <span className="text-yellow-400 font-bold">${UF_VALOR_CLP.toLocaleString('es-CL')}</span></p>
+          <p className="text-xs text-slate-500 mt-0.5">Facturación en UF · Valor UF: <span className="text-yellow-400 font-bold">${ufClp.toLocaleString('es-CL')}</span>{fecha && <span className="text-slate-600"> · {fecha}</span>}</p>
         </div>
         <div className="flex gap-2">
           {canCreate && (
@@ -67,7 +69,7 @@ export default function Honorarios() {
             <k.icon size={14} style={{ color: k.color }} className="mx-auto mb-1" />
             <p className="text-base font-black" style={{ color: k.color }}>{k.uf.toFixed(1)}</p>
             <p className="text-[9px] text-slate-500 font-semibold">UF {k.label}</p>
-            <p className="text-[9px] text-slate-600">${(k.uf * UF_VALOR_CLP / 1_000_000).toFixed(1)}M</p>
+            <p className="text-[9px] text-slate-600">${(k.uf * ufClp / 1_000_000).toFixed(1)}M</p>
           </motion.div>
         ))}
       </div>
@@ -154,7 +156,11 @@ export default function Honorarios() {
         <p className="text-[11px] text-slate-400 leading-relaxed">
           La UF se reajusta diariamente según el IPC, protegiendo los honorarios de la inflación. Los honorarios pactados en UF mantienen su valor real durante toda la duración del caso, independiente del tiempo que tome su resolución.
         </p>
-        <p className="text-[10px] text-slate-600 mt-1">Valor UF hoy (CMF): ${UF_VALOR_CLP.toLocaleString('es-CL')} · Fuente: Comisión para el Mercado Financiero</p>
+        <p className="text-[10px] text-slate-600 mt-1">
+          UF referencia: ${ufClp.toLocaleString('es-CL')}
+          {fecha ? ` (${fecha})` : ''} · Fuente: {fuente}
+          {ufError ? ` · ${ufError}` : ''}
+        </p>
       </div>
 
       {/* Edit modal */}
@@ -181,7 +187,7 @@ export default function Honorarios() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-[10px] text-slate-500 mb-1">Monto (UF)</p>
-                    <input type="number" value={editTarget.montoUF} onChange={e => setEditTarget(t => t ? { ...t, montoUF: parseFloat(e.target.value) || 0, montoCLP: (parseFloat(e.target.value) || 0) * UF_VALOR_CLP } : t)}
+                    <input type="number" value={editTarget.montoUF} onChange={e => setEditTarget(t => t ? { ...t, montoUF: parseFloat(e.target.value) || 0, montoCLP: (parseFloat(e.target.value) || 0) * ufClp } : t)}
                       className="w-full px-3 py-2 rounded-xl text-xs text-slate-200 outline-none"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
                   </div>
@@ -203,7 +209,7 @@ export default function Honorarios() {
                     className="w-full px-3 py-2 rounded-xl text-xs text-slate-200 outline-none"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
                 </div>
-                <p className="text-[10px] text-slate-600 text-right">= ${(editTarget.montoUF * UF_VALOR_CLP).toLocaleString('es-CL')} CLP</p>
+                <p className="text-[10px] text-slate-600 text-right">= ${(editTarget.montoUF * ufClp).toLocaleString('es-CL')} CLP</p>
               </div>
               <div className="px-5 pb-5 flex gap-2">
                 <button onClick={() => setEditTarget(null)} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400" style={{ background: 'rgba(255,255,255,0.04)' }}>Cancelar</button>

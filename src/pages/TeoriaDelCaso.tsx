@@ -9,6 +9,15 @@ import {
   Volume2, FileAudio, PlusCircle, Save, RefreshCw, X
 } from 'lucide-react'
 import { extractTextFromFile } from '../utils/extractText'
+import { getGroqChatModelId } from '../services/groqModels'
+import {
+  getZaiChatModelId,
+  getKimiChatModelId,
+  getQwenChatModelId,
+  ZAI_CHAT_URL,
+  KIMI_CHAT_URL,
+  QWEN_CHAT_URL,
+} from '../services/asiaAiModels'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType } from 'docx'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────────
@@ -68,10 +77,13 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
 }
 
 // ── API keys ───────────────────────────────────────────────────────────────────
-const getGroqKey  = () => localStorage.getItem('lexara_groq_key')    || ''
-const getOpenAIKey= () => localStorage.getItem('lexara_openai_key')  || ''
-const getClaudeKey= () => localStorage.getItem('lexara_anthropic_key')|| ''
-const getGeminiKey= () => localStorage.getItem('lexara_gemini_key')  || ''
+const getGroqKey = () => localStorage.getItem('lexara_groq_key') || ''
+const getOpenAIKey = () => localStorage.getItem('lexara_openai_key') || ''
+const getClaudeKey = () => localStorage.getItem('lexara_anthropic_key') || ''
+const getGeminiKey = () => localStorage.getItem('lexara_gemini_key') || ''
+const getKimiKey = () => localStorage.getItem('lexara_kimi_key') || ''
+const getZaiKey = () => localStorage.getItem('lexara_zai_key') || ''
+const getQwenKey = () => localStorage.getItem('lexara_qwen_key') || ''
 
 // ── Transcripción con Groq Whisper (GRATIS) ────────────────────────────────────
 async function transcribirGroq(audioBlob: Blob, apiKey: string): Promise<string> {
@@ -114,11 +126,12 @@ async function transcribirOpenAI(audioBlob: Blob, apiKey: string): Promise<strin
 
 // ── Análisis con Groq Llama 3.3 70B (GRATIS) ──────────────────────────────────
 async function analizarConGroq(texto: string, apiKey: string): Promise<TeoriaDelCaso> {
+  const model = getGroqChatModelId()
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model,
       temperature: 0.3,
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: buildPromptHechos(texto) }],
@@ -130,7 +143,74 @@ async function analizarConGroq(texto: string, apiKey: string): Promise<TeoriaDel
   }
   const data = await res.json()
   const raw = data.choices?.[0]?.message?.content || '{}'
-  return { ...JSON.parse(raw), modeloIA: 'Groq · Llama 3.3 70B (gratuito)', fecha: new Date().toLocaleDateString('es-CL') }
+  return { ...JSON.parse(raw), modeloIA: `Groq · ${model}`, fecha: new Date().toLocaleDateString('es-CL') }
+}
+
+async function analizarConZai(texto: string, apiKey: string): Promise<TeoriaDelCaso> {
+  const model = getZaiChatModelId()
+  const res = await fetch(ZAI_CHAT_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+      'Accept-Language': 'en-US,en',
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: buildPromptHechos(texto) }],
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `Z.AI error ${res.status}`)
+  }
+  const data = await res.json()
+  const raw = data.choices?.[0]?.message?.content || '{}'
+  return { ...JSON.parse(raw), modeloIA: `Z.AI · ${model}`, fecha: new Date().toLocaleDateString('es-CL') }
+}
+
+async function analizarConKimi(texto: string, apiKey: string): Promise<TeoriaDelCaso> {
+  const model = getKimiChatModelId()
+  const res = await fetch(KIMI_CHAT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: buildPromptHechos(texto) }],
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `Kimi error ${res.status}`)
+  }
+  const data = await res.json()
+  const raw = data.choices?.[0]?.message?.content || '{}'
+  return { ...JSON.parse(raw), modeloIA: `Kimi · ${model}`, fecha: new Date().toLocaleDateString('es-CL') }
+}
+
+async function analizarConQwen(texto: string, apiKey: string): Promise<TeoriaDelCaso> {
+  const model = getQwenChatModelId()
+  const res = await fetch(QWEN_CHAT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: buildPromptHechos(texto) }],
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `Qwen error ${res.status}`)
+  }
+  const data = await res.json()
+  const raw = data.choices?.[0]?.message?.content || '{}'
+  return { ...JSON.parse(raw), modeloIA: `Qwen · ${model}`, fecha: new Date().toLocaleDateString('es-CL') }
 }
 
 // ── Análisis con GPT-4o ────────────────────────────────────────────────────────
@@ -531,12 +611,21 @@ export default function TeoriaDelCaso() {
     try {
       let resultado: TeoriaDelCaso
       const groqKey = getGroqKey()
+      const kimiKey = getKimiKey()
+      const zaiKey = getZaiKey()
+      const qwenKey = getQwenKey()
       const openaiKey = getOpenAIKey()
       const claudeKey = getClaudeKey()
       const geminiKey = getGeminiKey()
 
       if (groqKey) {
         resultado = await analizarConGroq(transcripcion, groqKey)
+      } else if (kimiKey) {
+        resultado = await analizarConKimi(transcripcion, kimiKey)
+      } else if (zaiKey) {
+        resultado = await analizarConZai(transcripcion, zaiKey)
+      } else if (qwenKey) {
+        resultado = await analizarConQwen(transcripcion, qwenKey)
       } else if (openaiKey) {
         resultado = await analizarConGPT(transcripcion, openaiKey)
       } else if (claudeKey) {

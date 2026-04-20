@@ -3,9 +3,9 @@ import { useState, useEffect, useMemo } from 'react'
 import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Briefcase, Users, Clock, CalendarDays, TrendingUp, AlertTriangle, ChevronRight, DollarSign, Gavel, Scale, CheckCircle, Timer, Calculator, MapPin, Library, BarChart2, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { UF_VALOR_CLP } from '../data/appData'
 import { RISK_COLORS } from '../data/legalDatabase'
 import { useAppData } from '../context/AppDataContext'
+import { useUf } from '../context/UfContext'
 
 function KpiCard({ title, value, sub, icon: Icon, color, urgent }: { title: string; value: string | number; sub?: string; icon: React.ElementType; color: string; urgent?: boolean }) {
   return (
@@ -63,6 +63,7 @@ const QUICK_MODULES = [
 ]
 
 export default function Dashboard() {
+  const { ufClp } = useUf()
   const { casos, clientes, honorarios, plazos, eventos } = useAppData()
   const today = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -104,7 +105,7 @@ export default function Dashboard() {
         <KpiCard title="Casos Activos"      value={kpis.casosActivos}     sub={`+${kpis.casosNuevosMes} este mes`} icon={Briefcase}    color="#3b82f6" />
         <KpiCard title="Clientes"           value={kpis.clientesActivos}  sub="activos en despacho"                  icon={Users}        color="#8b5cf6" />
         <KpiCard title="Plazos Urgentes"    value={kpis.plazosUrgentes.length}   sub={`${kpis.plazosVencidos} vencido`}   icon={Clock}        color="#ef4444" urgent />
-        <KpiCard title="Honorarios Pend."   value={`${kpis.honorariosPendientesUF} UF`} sub={`$${(kpis.honorariosPendientesUF * UF_VALOR_CLP / 1000000).toFixed(1)}M CLP`} icon={DollarSign} color="#eab308" />
+        <KpiCard title="Honorarios Pend."   value={`${kpis.honorariosPendientesUF} UF`} sub={`$${(kpis.honorariosPendientesUF * ufClp / 1000000).toFixed(1)}M CLP`} icon={DollarSign} color="#eab308" />
       </div>
 
       {/* Accesos rápidos módulos */}

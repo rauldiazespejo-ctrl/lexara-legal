@@ -14,7 +14,7 @@ import {
   getZaiChatModelId,
   getKimiChatModelId,
   getQwenChatModelId,
-  ZAI_CHAT_URL,
+  getZaiChatCompletionsUrl,
   KIMI_CHAT_URL,
   QWEN_CHAT_URL,
 } from '../services/asiaAiModels'
@@ -148,7 +148,7 @@ async function analizarConGroq(texto: string, apiKey: string): Promise<TeoriaDel
 
 async function analizarConZai(texto: string, apiKey: string): Promise<TeoriaDelCaso> {
   const model = getZaiChatModelId()
-  const res = await fetch(ZAI_CHAT_URL, {
+  const res = await fetch(getZaiChatCompletionsUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -19,7 +19,12 @@ function dispatchModelEvent(name: string, id: string) {
 }
 
 // ─── Z.AI (GLM) ─────────────────────────────────────────────────────────────
-const ZAI_BASE = 'https://api.z.ai/api/paas/v4'
+/** Mismo origen: Vite y Netlify reenvían a api.z.ai (el navegador no puede llamar a Z.AI directo por CORS). */
+function getZaiProxyRoot(): string {
+  const b = import.meta.env.BASE_URL || '/'
+  const root = b.replace(/\/$/, '') || ''
+  return `${root}/api/zai`
+}
 
 const ZAI_STATIC: ListedModel[] = [
   { id: 'glm-5.1' },
@@ -35,7 +40,7 @@ const NON_CHAT = /whisper|embed|rerank|tts|moderation|image|video|audio|realtime
 export async function fetchZaiModels(apiKey: string): Promise<ListedModel[]> {
   const key = apiKey.trim()
   if (!key) throw new Error('Ingresa una API Key')
-  const res = await fetch(`${ZAI_BASE}/models`, {
+  const res = await fetch(`${getZaiProxyRoot()}/models`, {
     headers: {
       Authorization: `Bearer ${key}`,
       'Accept-Language': 'en-US,en',
@@ -69,7 +74,9 @@ export function setZaiChatModelId(id: string): void {
   dispatchModelEvent(LEXARA_ZAI_MODEL_CHANGED, id.trim())
 }
 
-export const ZAI_CHAT_URL = `${ZAI_BASE}/chat/completions`
+export function getZaiChatCompletionsUrl(): string {
+  return `${getZaiProxyRoot()}/chat/completions`
+}
 
 // ─── Kimi (Moonshot) ─────────────────────────────────────────────────────────
 const KIMI_BASE = 'https://api.moonshot.ai/v1'

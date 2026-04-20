@@ -4,3 +4,10 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Z.AI: el navegador llama a /api/zai/* (mismo origen); Netlify reenvía a api.z.ai (CORS).
+[[redirects]]
+  from = "/api/zai/*"
+  to = "https://api.z.ai/api/paas/v4/:splat"
+  status = 200
+  force = true

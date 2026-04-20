@@ -15,7 +15,7 @@ import {
   getZaiChatModelId,
   getKimiChatModelId,
   getQwenChatModelId,
-  ZAI_CHAT_URL,
+  getZaiChatCompletionsUrl,
   KIMI_CHAT_URL,
   QWEN_CHAT_URL,
   LEXARA_ZAI_MODEL_CHANGED,
@@ -201,7 +201,7 @@ async function callOpenAiCompatChat(
 }
 
 async function callZai(texto: string, apiKey: string, modelId = getZaiChatModelId()) {
-  return callOpenAiCompatChat(ZAI_CHAT_URL, apiKey, modelId, texto, { 'Accept-Language': 'en-US,en' })
+  return callOpenAiCompatChat(getZaiChatCompletionsUrl(), apiKey, modelId, texto, { 'Accept-Language': 'en-US,en' })
 }
 
 async function callKimi(texto: string, apiKey: string, modelId = getKimiChatModelId()) {

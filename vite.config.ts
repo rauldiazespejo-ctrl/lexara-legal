@@ -12,5 +12,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    proxy: {
+      // Z.AI no expone CORS al navegador; proxy mismo origen → api.z.ai
+      '/api/zai': {
+        target: 'https://api.z.ai',
+        changeOrigin: true,
+        secure: true,
+        rewrite: path => path.replace(/^\/api\/zai/, '/api/paas/v4'),
+      },
+    },
   },
 })

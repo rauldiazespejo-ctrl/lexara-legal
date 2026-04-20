@@ -251,7 +251,7 @@ export default function Settings() {
                 </div>
                 <OpenAiCompatModelHub
                   title="Z.AI (智谱 GLM)"
-                  subtitle="API compatible OpenAI · modelos GLM (glm-5.1, glm-4.6…)"
+                  subtitle="Tráfico vía proxy del sitio (evita CORS). Modelos GLM: glm-5.1, glm-4.6…"
                   keyName="lexara_zai_key"
                   placeholder="API Key Z.AI…"
                   color="#a855f7"

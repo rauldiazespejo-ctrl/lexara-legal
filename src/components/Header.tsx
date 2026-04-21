@@ -5,11 +5,13 @@ import { useAuth } from '../context/AuthContext'
 import { useUf } from '../context/UfContext'
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-function NexusForgeLogo({ size = 32 }: { size?: number }) {
+function LexaraMark({ size = 32 }: { size?: number }) {
   return (
-    <div className="rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
-      style={{ width: size, height: size, minWidth: size, boxShadow: '0 2px 12px rgba(29,78,216,0.4)', padding: 3 }}>
-      <img src="/nexusforge-logo.jpg" alt="LEXARA PRO" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+    <div
+      className="rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 ring-1 ring-indigo-500/35 bg-gradient-to-br from-slate-950 to-indigo-950/80"
+      style={{ width: size, height: size, minWidth: size, boxShadow: '0 0 0 1px rgba(99,102,241,0.2), 0 8px 28px rgba(15,23,42,0.85)' }}
+    >
+      <img src="/lexara-logo.svg" alt="LEXARA PRO" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
     </div>
   )
 }
@@ -64,7 +66,7 @@ export default function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} className="relative">
-            <NexusForgeLogo size={34} />
+            <LexaraMark size={34} />
           </motion.div>
           <div className="flex flex-col leading-none">
             <span className="text-base font-black tracking-tight"

@@ -11,15 +11,6 @@ import { useAuth } from '../context/AuthContext'
 import { useAppData } from '../context/AppDataContext'
 import { useState } from 'react'
 
-function NexusForgeLogoSidebar() {
-  return (
-    <div className="rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
-      style={{ width: 36, height: 36, minWidth: 36, boxShadow: '0 2px 10px rgba(29,78,216,0.35)', padding: 3 }}>
-      <img src="/nexusforge-logo.jpg" alt="LEXARA PRO" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
-    </div>
-  )
-}
-
 const NAV_SECTIONS = [
   {
     label: 'Principal',

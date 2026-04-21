@@ -1,62 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1e3a8a"/>
-      <stop offset="50%" stop-color="#3730a3"/>
-      <stop offset="100%" stop-color="#5b21b6"/>
+    <linearGradient id="lx-bg" x1="48" y1="40" x2="480" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="45%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
     </linearGradient>
-    <linearGradient id="glow" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.1"/>
+    <linearGradient id="lx-beam" x1="256" y1="96" x2="256" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e0e7ff"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
     </linearGradient>
-    <linearGradient id="scaleGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#93c5fd"/>
-      <stop offset="100%" stop-color="#c4b5fd"/>
+    <linearGradient id="lx-arc" x1="120" y1="120" x2="420" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="55%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#f472b6"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#1e3a8a" flood-opacity="0.6"/>
+    <linearGradient id="lx-glass" x1="88" y1="88" x2="420" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02"/>
+    </linearGradient>
+    <filter id="lx-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
-    <filter id="innerGlow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
+    <clipPath id="lx-clip">
+      <rect width="512" height="512" rx="120" ry="120"/>
+    </clipPath>
   </defs>
 
-  <!-- Background rounded square -->
-  <rect width="200" height="200" rx="42" fill="url(#bg)" filter="url(#shadow)"/>
-  <!-- Inner glow overlay -->
-  <rect width="200" height="200" rx="42" fill="url(#glow)"/>
-  <!-- Subtle border -->
-  <rect x="1" y="1" width="198" height="198" rx="41" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-
-  <!-- Abstract scale of justice - beam/balance bar -->
-  <!-- Vertical pillar -->
-  <rect x="98" y="52" width="4" height="90" rx="2" fill="url(#scaleGrad)" opacity="0.9"/>
-  <!-- Top horizontal bar -->
-  <rect x="58" y="52" width="84" height="5" rx="2.5" fill="url(#scaleGrad)"/>
-
-  <!-- Left chain -->
-  <line x1="72" y1="57" x2="68" y2="90" stroke="url(#scaleGrad)" stroke-width="2.5" stroke-linecap="round"/>
-  <!-- Right chain -->
-  <line x1="128" y1="57" x2="132" y2="85" stroke="url(#scaleGrad)" stroke-width="2.5" stroke-linecap="round"/>
-
-  <!-- Left pan (slightly lower - loaded) -->
-  <ellipse cx="68" cy="97" rx="20" ry="5.5" fill="url(#scaleGrad)" opacity="0.85"/>
-  <path d="M48 97 Q68 110 88 97" stroke="url(#scaleGrad)" stroke-width="2" fill="none" opacity="0.6"/>
-
-  <!-- Right pan (higher - lighter) -->
-  <ellipse cx="132" cy="91" rx="20" ry="5.5" fill="url(#scaleGrad)" opacity="0.85"/>
-  <path d="M112 91 Q132 104 152 91" stroke="url(#scaleGrad)" stroke-width="2" fill="none" opacity="0.6"/>
-
-  <!-- Base -->
-  <rect x="88" y="139" width="24" height="5" rx="2.5" fill="url(#scaleGrad)" opacity="0.7"/>
-  <rect x="76" y="144" width="48" height="5" rx="2.5" fill="url(#scaleGrad)" opacity="0.5"/>
-
-  <!-- "L" letter mark subtle overlay -->
-  <rect x="82" y="158" width="36" height="3" rx="1.5" fill="rgba(165,180,252,0.3)"/>
-
-  <!-- Glowing dot accent top-right -->
-  <circle cx="157" cy="43" r="6" fill="#fbbf24" opacity="0.9"/>
-  <circle cx="157" cy="43" r="3" fill="#ffffff" opacity="0.8"/>
-  <circle cx="157" cy="43" r="10" fill="#fbbf24" opacity="0.15"/>
+  <g clip-path="url(#lx-clip)">
+    <rect width="512" height="512" rx="120" fill="url(#lx-bg)"/>
+    <!-- Fine grid: legal structure / data -->
+    <g opacity="0.11" stroke="#94a3b8" stroke-width="1">
+      <path d="M0 128 H512 M0 256 H512 M0 384 H512 M128 0 V512 M256 0 V512 M384 0 V512"/>
+    </g>
+    <!-- Diagonal energy plane -->
+    <path d="M-40 520 L520 -40 L520 520 Z" fill="url(#lx-glass)" opacity="0.9"/>
+    <!-- Orbital arc -->
+    <path d="M96 288 A160 160 0 0 1 416 288" stroke="url(#lx-arc)" stroke-width="10" stroke-linecap="round" fill="none" filter="url(#lx-glow)" opacity="0.95"/>
+    <!-- Deconstructed balance: pillar -->
+    <path d="M244 108 h24 v296 h-24z" fill="url(#lx-beam)" opacity="0.92"/>
+    <!-- Top crossbeam -->
+    <path d="M148 108 h216 a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H148a8 8 0 0 1-8-8v-16a8 8 0 0 1 8-8z" fill="url(#lx-beam)" opacity="0.88"/>
+    <!-- Abstract L negative cut (right side) -->
+    <path d="M320 172h112v220H320z" fill="#020617" opacity="0.55"/>
+    <path d="M320 172 L432 172 L432 392 L352 392 L352 260 L320 260Z" fill="#0f172a" opacity="0.75"/>
+    <!-- Floating pans / nodes -->
+    <circle cx="168" cy="328" r="36" stroke="url(#lx-arc)" stroke-width="4" fill="rgba(15,23,42,0.85)"/>
+    <circle cx="344" cy="296" r="28" stroke="url(#lx-beam)" stroke-width="3" fill="rgba(30,27,75,0.9)"/>
+    <line x1="168" y1="140" x2="168" y2="292" stroke="url(#lx-beam)" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+    <line x1="344" y1="140" x2="344" y2="268" stroke="url(#lx-beam)" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+    <!-- Accent spark -->
+    <circle cx="392" cy="120" r="10" fill="#fbbf24"/>
+    <circle cx="392" cy="120" r="22" fill="#fbbf24" opacity="0.15"/>
+    <!-- Rim -->
+    <rect x="2" y="2" width="508" height="508" rx="118" stroke="url(#lx-arc)" stroke-opacity="0.35" stroke-width="3" fill="none"/>
+  </g>
 </svg>

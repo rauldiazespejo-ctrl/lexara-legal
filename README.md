@@ -1,3 +1,13 @@
+# LEXARA PRO
+
+- **Web / Netlify:** `npm run build` — PWA (service worker) con precache y fuentes; modo offline para la carga de la app (APIs/IA requieren red).
+- **Escritorio (Tauri):** Requiere [Rust](https://rustup.rs) y Node. `npm run tauri:dev` (ventana nativa + Vite) · `npm run tauri:build` genera el instalador (`.app` / `.dmg` en macOS, etc.). El binario embebe la UI; en producción, el proxy Z.AI usa `https://lexara.netlify.app` (sobrescribible con `VITE_DESKTOP_API_ORIGIN`).
+- **Android:** `npm run build:apk` (Capacitor).
+
+**GitHub Pages:** el flujo fija `VITE_GH_PAGES=1` para el `base` de Vite.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

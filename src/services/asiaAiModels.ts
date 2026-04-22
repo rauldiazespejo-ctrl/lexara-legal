@@ -19,8 +19,12 @@ function dispatchModelEvent(name: string, id: string) {
 }
 
 // ─── Z.AI (GLM) ─────────────────────────────────────────────────────────────
-/** Mismo origen: Vite y Netlify reenvían a api.z.ai (el navegador no puede llamar a Z.AI directo por CORS). */
+/** Mismo origen en web: Vite dev y Netlify reenvían a api.z.ai (CORS). En Tauri (build) no hay proxy local → origen público. */
 function getZaiProxyRoot(): string {
+  if (import.meta.env.PROD && import.meta.env.VITE_TAURI === '1') {
+    const o = (import.meta.env.VITE_DESKTOP_API_ORIGIN ?? 'https://lexara.netlify.app').replace(/\/$/, '')
+    return `${o}/api/zai`
+  }
   const b = import.meta.env.BASE_URL || '/'
   const root = b.replace(/\/$/, '') || ''
   return `${root}/api/zai`

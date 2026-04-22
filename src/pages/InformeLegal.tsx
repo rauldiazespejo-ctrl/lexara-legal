@@ -6,9 +6,10 @@ import {
   FileText, Upload, Brain, Download, Loader2, AlertTriangle,
   CheckCircle, X, Settings, Eye, EyeOff, Lock, Unlock,
   Scale, Shield, BookOpen, Zap, Info, RefreshCw, ArrowRight,
-  FileDown, Star, ChevronDown, ChevronUp
+  FileDown, FileType2, Star, ChevronDown, ChevronUp
 } from 'lucide-react'
 import { downloadInformeLegal, type InformeLegalData, type RiesgoInforme } from '../utils/informeLegalGenerator'
+import { downloadInformeLegalPdf } from '../utils/informeLegalPdfGenerator'
 import { extractTextFromFile } from '../utils/extractText'
 import { getGroqChatModelId } from '../services/groqModels'
 import {
@@ -22,6 +23,54 @@ import {
   LEXARA_KIMI_MODEL_CHANGED,
   LEXARA_QWEN_MODEL_CHANGED,
 } from '../services/asiaAiModels'
+
+// ── Vista previa (alineada a generateInformeLegal: portada + metadatos pie) ──
+function VistaPreviaPortadaDocx({ ciudad, modeloLabel }: { ciudad: string; modeloLabel: string }) {
+  const fecha = new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })
+  return (
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{ border: '1px solid rgba(99,102,241,0.22)' }}
+      aria-label="Vista previa aproximada del documento Word">
+      <div className="px-3 py-2 flex items-center gap-2" style={{ background: 'rgba(15,23,42,0.75)' }}>
+        <Eye size={12} className="text-indigo-400 flex-shrink-0" />
+        <span className="text-[10px] font-bold text-slate-400">Vista previa del .docx (misma estructura que al descargar)</span>
+      </div>
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-5">
+        <div
+          className="min-[480px]:col-span-2 p-4 flex flex-col items-center justify-center text-center gap-1.5"
+          style={{ background: 'linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%)' }}>
+          <img
+            src={`${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/lexara-logo.png`}
+            alt="LEXARA"
+            className="h-11 w-11 object-contain drop-shadow-lg rounded-xl"
+            width={44}
+            height={44}
+          />
+          <p className="text-[8px] font-black text-white/90 tracking-[0.2em]">LEXARA PRO</p>
+          <p className="text-[7px] text-indigo-200/80 italic">Informe para jurisdicción chilena</p>
+        </div>
+        <div className="min-[480px]:col-span-3 p-4 min-h-[7rem] flex flex-col justify-center" style={{ background: 'linear-gradient(135deg, #3730a3, #4f46e5)' }}>
+          <p className="text-[10px] font-black text-white/95 leading-snug uppercase tracking-wide">
+            Análisis jurídico del contrato
+          </p>
+          <p className="text-[9px] text-amber-200/90 mt-2 leading-relaxed">
+            Título del contrato, partes y proyecto se rellenan con la respuesta de la IA al generar el informe.
+          </p>
+          <p className="text-[9px] text-indigo-100/80 mt-2 italic">(Perspectiva Derecho Chileno)</p>
+        </div>
+      </div>
+      <div className="px-3 py-2.5 space-y-1.5" style={{ background: 'rgba(10,18,35,0.88)' }}>
+        <p className="text-[9px] text-slate-500 leading-relaxed">
+          <span className="text-slate-400 font-semibold">Exporta:</span> <strong className="text-slate-300">PDF</strong> (recomendado, logo y diseño corporativo) u <strong className="text-slate-300">Word</strong> (.docx). Mismo contenido: resumen, secciones I a X, tabla de riesgos, recomendaciones y membrete LEXARA PRO.
+        </p>
+        <p className="text-[9px] text-slate-600 font-mono">
+          Pie de página: {ciudad || 'Ciudad'}, {fecha} · {modeloLabel}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 // ── Modelos IA ────────────────────────────────────────────────────────────────
 const MODELOS = [
@@ -173,27 +222,34 @@ async function callOpenAiCompatChat(
   texto: string,
   extraHeaders?: Record<string, string>,
 ) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-      ...extraHeaders,
-    },
-    body: JSON.stringify({
+  const makeBody = (includeJsonObjectFormat: boolean) =>
+    JSON.stringify({
       model: modelId,
       temperature: 0.1,
       max_tokens: 8000,
-      response_format: { type: 'json_object' },
+      ...(includeJsonObjectFormat ? { response_format: { type: 'json_object' } } : {}),
       messages: [
         { role: 'system', content: OPENAI_JSON_SYSTEM },
         { role: 'user', content: buildPrompt(texto) },
       ],
-    }),
-  })
+    })
+  const post = (body: string) =>
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        ...extraHeaders,
+      },
+      body,
+    })
+  let res = await post(makeBody(true))
+  if (!res.ok && (res.status === 400 || res.status === 422)) {
+    res = await post(makeBody(false))
+  }
   if (!res.ok) {
     const e = await res.json().catch(() => ({}))
-    throw new Error(e.error?.message ?? `API error ${res.status}`)
+    throw new Error((e as { error?: { message?: string } }).error?.message ?? `API error ${res.status}`)
   }
   const d = await res.json()
   const raw = d.choices[0].message.content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -217,7 +273,7 @@ async function callDeepSeek(texto: string, apiKey: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'deepseek-chat',
+      model: 'deepseek-reasoner',
       temperature: 0.1,
       max_tokens: 8000,
       messages: [
@@ -330,23 +386,45 @@ function SeccionInforme({ roman, titulo, children, defaultOpen = false }: {
 }
 
 // ── Vista del informe generado ─────────────────────────────────────────────────
-function VistaInforme({ data, onDescargar, onNuevo, cargandoDocx }: {
+function VistaInforme({
+  data,
+  onDescargarPdf,
+  onDescargarWord,
+  onNuevo,
+  cargandoPdf,
+  cargandoDocx,
+  esModoDemostracion,
+}: {
   data: any
-  onDescargar: () => void
+  onDescargarPdf: () => void
+  onDescargarWord: () => void
   onNuevo: () => void
+  cargandoPdf: boolean
   cargandoDocx: boolean
+  esModoDemostracion?: boolean
 }) {
+  const logoSrc = `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/lexara-logo.png`
   const riesgos: RiesgoInforme[] = data.riesgos ?? []
   const recomendaciones: string[] = data.recomendaciones ?? []
 
   return (
     <div className="space-y-3">
+      {esModoDemostracion && (
+        <div
+          className="p-3 rounded-xl text-[10px] text-amber-200/95 leading-relaxed"
+          style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
+          <p className="font-bold text-amber-300 mb-0.5">Modo demostración (sin API key)</p>
+          <p className="text-amber-200/80">Configuración → Centro de conexión IA: añade una clave del motor elegido para un informe completo con IA. Este resultado es ilustrativo.</p>
+        </div>
+      )}
       {/* Header del informe */}
       <div className="p-4 rounded-2xl relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg,rgba(29,78,216,0.15),rgba(91,33,182,0.1))', border: '1px solid rgba(99,102,241,0.3)' }}>
         <div className="absolute inset-0 opacity-20"
           style={{ background: 'radial-gradient(circle at 80% 20%,rgba(99,102,241,0.5),transparent 60%)' }} />
-        <div className="relative">
+        <div className="relative flex gap-3 items-start">
+          <img src={logoSrc} alt="LEXARA" className="h-12 w-12 object-contain rounded-xl flex-shrink-0 shadow-lg" width={48} height={48} />
+          <div className="min-w-0 flex-1">
           <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-1 flex items-center gap-1.5">
             <Scale size={10} />ANÁLISIS JURÍDICO DEL CONTRATO · DERECHO CHILENO
           </p>
@@ -361,6 +439,7 @@ function VistaInforme({ data, onDescargar, onNuevo, cargandoDocx }: {
             <span className="text-[10px] text-slate-400 px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
               Contratista: <strong className="text-slate-200">{data.parteB}</strong>
             </span>
+          </div>
           </div>
         </div>
       </div>
@@ -421,28 +500,63 @@ function VistaInforme({ data, onDescargar, onNuevo, cargandoDocx }: {
         </div>
       </SeccionInforme>
 
-      {/* Acciones */}
-      <div className="flex gap-2 pt-2 flex-wrap">
-        <motion.button whileHover={{ scale: 1.02 }} onClick={onDescargar} disabled={cargandoDocx}
-          className="flex-1 py-3 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"
-          style={{ background: 'linear-gradient(135deg,#1e3a8a,#4f46e5,#7c3aed)', boxShadow: '0 6px 24px rgba(79,70,229,0.35)' }}>
-          {cargandoDocx ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}
-          {cargandoDocx ? 'Generando Word...' : 'Descargar Informe (.docx)'}
+      {/* Acciones — PDF principal (entrega idónea con logo) */}
+      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          onClick={onDescargarPdf}
+          disabled={cargandoPdf || cargandoDocx}
+          className="flex-1 min-w-[12rem] py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-60 order-1"
+          style={{ background: 'linear-gradient(135deg,#0f172a,#1e3a8a,#4f46e5)', boxShadow: '0 8px 28px rgba(15,23,42,0.45)' }}>
+          {cargandoPdf ? <Loader2 size={16} className="animate-spin" /> : <FileType2 size={16} />}
+          {cargandoPdf ? 'Generando PDF...' : 'Descargar informe (PDF)'}
         </motion.button>
-        <button onClick={onNuevo}
-          className="px-4 py-3 rounded-2xl text-xs text-slate-400 flex items-center gap-2"
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.01 }}
+          onClick={onDescargarWord}
+          disabled={cargandoPdf || cargandoDocx}
+          className="flex-1 min-w-[12rem] py-3 rounded-2xl text-xs font-bold text-slate-200 flex items-center justify-center gap-2 disabled:opacity-60 order-2"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(99,102,241,0.25)' }}>
+          {cargandoDocx ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+          {cargandoDocx ? 'Generando Word...' : 'Exportar Word (.docx)'}
+        </motion.button>
+        <button
+          type="button"
+          onClick={onNuevo}
+          className="px-4 py-3 rounded-2xl text-xs text-slate-400 flex items-center justify-center gap-2 order-3 sm:order-3"
           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <RefreshCw size={13} />Nuevo análisis
         </button>
       </div>
+      <p className="text-[9px] text-slate-600 text-center pt-0.5">El PDF incorpora el logo LEXARA, membrete y pie de página corporativos, listo para compartir con clientes o tribunales.</p>
     </div>
   )
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function InformeLegal() {
+export default function InformeLegal({ initialTexto = '' }: { initialTexto?: string } = {}) {
   const [modeloId, setModeloId] = useState('groq')
   const [modelConfigRev, setModelConfigRev] = useState(0)
+  const [esModoDemostracion, setEsModoDemostracion] = useState(false)
+  const [archivo, setArchivo] = useState<File | null>(null)
+  const [textoManual, setTextoManual] = useState('')
+  const [inputMode, setInputMode] = useState<'archivo' | 'texto'>('texto')
+  const [estado, setEstado] = useState<'idle' | 'extrayendo' | 'analizando' | 'resultado' | 'error'>('idle')
+  const [informe, setInforme] = useState<any>(null)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [cargandoDocx, setCargandoDocx] = useState(false)
+  const [cargandoPdf, setCargandoPdf] = useState(false)
+  const [ciudad, setCiudad] = useState('Santiago')
+  const [fase, setFase] = useState('')
+
+  useEffect(() => {
+    if (initialTexto.trim().length >= 40) {
+      setTextoManual(initialTexto)
+      setInputMode('texto')
+    }
+  }, [initialTexto])
 
   useEffect(() => {
     const onChange = () => setModelConfigRev(n => n + 1)
@@ -470,16 +584,6 @@ export default function InformeLegal() {
           : modeloId === 'qwen'
             ? getQwenChatModelId()
             : ''
-  const [archivo, setArchivo] = useState<File | null>(null)
-  const [textoManual, setTextoManual] = useState('')
-  const [inputMode, setInputMode] = useState<'archivo' | 'texto'>('texto')
-  const [estado, setEstado] = useState<'idle' | 'extrayendo' | 'analizando' | 'resultado' | 'error'>('idle')
-  const [informe, setInforme] = useState<any>(null)
-  const [errorMsg, setErrorMsg] = useState('')
-  const [cargandoDocx, setCargandoDocx] = useState(false)
-  const [ciudad, setCiudad] = useState('Santiago')
-  const [fase, setFase] = useState('')
-
   const modelo = MODELOS.find(m => m.id === modeloId) ?? MODELOS[0]
   const tieneKey = !!localStorage.getItem(modelo.keyName)
 
@@ -524,15 +628,14 @@ export default function InformeLegal() {
       const apiKey = localStorage.getItem(modelo.keyName) ?? ''
 
       if (!apiKey) {
-        const hint =
-          modeloId === 'groq'
-            ? 'Configura tu API Key gratuita de Groq en Configuración → Centro de conexión IA. console.groq.com'
-            : ['zai', 'kimi', 'qwen'].includes(modeloId)
-              ? 'Configura la API Key en Configuración → Centro de conexión IA (Z.AI, Kimi o Qwen) y pulsa conectar.'
-              : 'Configura la API Key de este proveedor en Configuración → Centro de conexión IA.'
-        setErrorMsg(hint)
-        setEstado('error'); return
-      } else if (modeloId === 'groq') {
+        parsed = analisisDemo(texto)
+        setEsModoDemostracion(true)
+        setInforme(parsed)
+        setEstado('resultado')
+        return
+      }
+      setEsModoDemostracion(false)
+      if (modeloId === 'groq') {
         parsed = await callGroq(texto, apiKey)
       } else if (modeloId === 'zai') {
         parsed = await callZai(texto, apiKey)
@@ -558,17 +661,29 @@ export default function InformeLegal() {
     }
   }
 
-  const descargar = async () => {
+  const buildExportData = (): InformeLegalData => ({
+    ...informe,
+    ciudad,
+    fecha: new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }),
+    modeloIA: tieneKey ? modelo.label : 'LEXARA IA (Demostración)',
+  })
+
+  const descargarPdf = async () => {
+    if (!informe) return
+    setCargandoPdf(true)
+    try {
+      await downloadInformeLegalPdf(buildExportData())
+    } catch (e) {
+      console.error(e)
+    }
+    setCargandoPdf(false)
+  }
+
+  const descargarWord = async () => {
     if (!informe) return
     setCargandoDocx(true)
     try {
-      const data: InformeLegalData = {
-        ...informe,
-        ciudad,
-        fecha: new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }),
-        modeloIA: tieneKey ? modelo.label : 'LEXARA IA (Demostración)',
-      }
-      await downloadInformeLegal(data)
+      await downloadInformeLegal(buildExportData())
     } catch (e) {
       console.error(e)
     }
@@ -577,12 +692,22 @@ export default function InformeLegal() {
 
   const reiniciar = () => {
     setEstado('idle'); setInforme(null); setArchivo(null)
-    setTextoManual(''); setErrorMsg(''); setFase('')
+    setTextoManual(''); setErrorMsg(''); setFase(''); setEsModoDemostracion(false)
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
   if (estado === 'resultado' && informe) {
-    return <VistaInforme data={informe} onDescargar={descargar} onNuevo={reiniciar} cargandoDocx={cargandoDocx} />
+    return (
+      <VistaInforme
+        data={informe}
+        onDescargarPdf={descargarPdf}
+        onDescargarWord={descargarWord}
+        onNuevo={reiniciar}
+        cargandoPdf={cargandoPdf}
+        cargandoDocx={cargandoDocx}
+        esModoDemostracion={esModoDemostracion}
+      />
+    )
   }
 
   return (
@@ -595,7 +720,7 @@ export default function InformeLegal() {
             Informe Jurídico de Contratos
           </p>
           <p className="text-[10px] text-slate-500 mt-0.5">
-            Análisis estructurado en 10 secciones · Derecho Chileno · Exporta a Word con logo LEXARA
+            Análisis estructurado en 10 secciones · Derecho Chileno · PDF o Word con marca LEXARA
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-[9px] text-slate-600 bg-white/[0.03] px-2 py-1.5 rounded-lg border border-white/[0.06]">
@@ -670,12 +795,17 @@ export default function InformeLegal() {
         </div>
       </div>
 
+      <VistaPreviaPortadaDocx ciudad={ciudad} modeloLabel={modelo.label} />
+
       {/* Input */}
       <div>
         <div className="flex gap-1 p-1 rounded-xl mb-3 w-fit" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
           {(['archivo', 'texto'] as const).map(t => (
-            <button key={t} onClick={() => setInputMode(t)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            <button
+              key={t}
+              type="button"
+              onClick={() => setInputMode(t)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40"
               style={inputMode === t
                 ? { background: 'rgba(29,78,216,0.25)', color: '#93c5fd', border: '1px solid rgba(29,78,216,0.35)' }
                 : { color: '#64748b' }}>

@@ -18,6 +18,8 @@
     "docx": "^9.6.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.34.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.576.0",
     "mammoth": "^1.11.0",
     "pdfjs-dist": "^5.5.207",

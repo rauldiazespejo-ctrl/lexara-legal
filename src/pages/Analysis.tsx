@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, X, Loader2, AlertTriangle, CheckCircle,
   ChevronDown, ChevronUp, BookOpen, Wrench, Scale, Zap,
-  Shield, BarChart2, Copy, Download, RefreshCw, Eye, Brain, FileDown
+  Shield, BarChart2, Copy, Download, RefreshCw, Eye, Brain, FileDown,
+  Check, ArrowRight, Columns2,
 } from 'lucide-react'
 import InformeLegal from './InformeLegal'
 import { extractTextFromFile } from '../utils/extractText'
@@ -417,7 +418,7 @@ function ClausulaCard({ clausula, idx }: { clausula: ClausulaAnalizada; idx: num
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}
       className="rounded-2xl overflow-hidden"
       style={{ border: `1px solid ${cfg.border}`, background: 'rgba(15,23,42,0.8)' }}>
-      <button onClick={() => setOpen(!open)}
+      <button type="button" onClick={() => setOpen(!open)}
         className="w-full p-4 flex items-center gap-3 hover:bg-white/[0.02] transition-all text-left">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -457,8 +458,11 @@ function ClausulaCard({ clausula, idx }: { clausula: ClausulaAnalizada; idx: num
                       { key: 'normas', label: 'Normativa Aplicable', icon: BookOpen },
                       { key: 'propuesta', label: 'Cláusula Propuesta', icon: Wrench },
                     ].map(({ key, label, icon: Icon }) => (
-                      <button key={key} onClick={() => setTab(key as typeof tab)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${tab === key ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                      <button
+                        type="button"
+                        key={key}
+                        onClick={() => setTab(key as typeof tab)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40 ${tab === key ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
                         style={tab === key ? { background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' } : { background: 'rgba(255,255,255,0.03)' }}>
                         <Icon size={11} />{label}
                       </button>
@@ -501,16 +505,31 @@ function ClausulaCard({ clausula, idx }: { clausula: ClausulaAnalizada; idx: num
                   )}
 
                   {tab === 'propuesta' && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
+                      <p className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                        <Columns2 size={11} className="text-slate-600" />
+                        Comparación lado a lado (en pantallas anchas): texto en el contrato y redacción sustituta sugerida.
+                      </p>
                       {clausula.problemas.filter((p, i, arr) => arr.findIndex(x => x.clausulaPropuesta === p.clausulaPropuesta) === i).map((p, i) => (
-                        <div key={i}>
-                          <div className="flex items-center gap-2 mb-2">
+                        <div key={i} className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                          <div className="p-2 px-3 flex items-center gap-2" style={{ background: 'rgba(16,185,129,0.06)' }}>
                             <Wrench size={11} className="text-emerald-400" />
-                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide">Cláusula sustituta propuesta</span>
+                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide">Sustitución {clausula.problemas.length > 1 ? `#${i + 1}` : 'sugerida'}</span>
+                            <span className="text-[10px] text-slate-600">· {p.tipo}</span>
                           </div>
-                          <div className="p-3 rounded-xl text-[11px] text-slate-200 leading-relaxed font-mono whitespace-pre-wrap"
-                            style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                            {p.clausulaPropuesta}
+                          <div className="grid grid-cols-1 md:grid-cols-2 min-h-0">
+                            <div
+                              className="p-3 border-t md:border-t-0 border-white/[0.06] md:border-r"
+                              style={{ background: 'rgba(255,255,255,0.02)' }}>
+                              <p className="text-[9px] font-bold text-amber-400/90 uppercase tracking-wide mb-1.5">Texto en el contrato</p>
+                              <p className="text-[11px] text-slate-400 leading-relaxed italic">"{clausula.textoOriginal}"</p>
+                            </div>
+                            <div className="p-3" style={{ background: 'rgba(16,185,129,0.04)' }}>
+                              <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide mb-1.5">Cláusula sustituta</p>
+                              <p className="text-[11px] text-slate-200 leading-relaxed font-mono whitespace-pre-wrap">
+                                {p.clausulaPropuesta}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -538,7 +557,19 @@ function ClausulaCard({ clausula, idx }: { clausula: ClausulaAnalizada; idx: num
 }
 
 // ── Vista resultado ────────────────────────────────────────────────────────────
-function ResultadoView({ resultado, archivo, onReset }: { resultado: Resultado; archivo: string; onReset: () => void }) {
+function ResultadoView({
+  resultado,
+  archivo,
+  onReset,
+  onVerInformeCompleto,
+  puedeIrAInforme,
+}: {
+  resultado: Resultado
+  archivo: string
+  onReset: () => void
+  onVerInformeCompleto?: () => void
+  puedeIrAInforme?: boolean
+}) {
   const cfg = RIESGO_CONFIG[resultado.riesgoGlobal]
   const criticas = resultado.clausulas.filter(c => c.riesgo === 'critico').length
   const altas = resultado.clausulas.filter(c => c.riesgo === 'alto').length
@@ -556,11 +587,23 @@ function ResultadoView({ resultado, archivo, onReset }: { resultado: Resultado; 
           </div>
           <p className="text-xs text-slate-500 mt-0.5">{resultado.tipo} · {archivo}</p>
         </div>
-        <button onClick={onReset}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <RefreshCw size={13} />Nuevo análisis
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {puedeIrAInforme && onVerInformeCompleto && (
+            <button
+              type="button"
+              onClick={onVerInformeCompleto}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-sky-200 transition-all"
+              style={{ background: 'rgba(29,78,216,0.2)', border: '1px solid rgba(59,130,246,0.35)' }}>
+              <FileDown size={13} />
+              Pasar a informe completo
+            </button>
+          )}
+          <button onClick={onReset}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <RefreshCw size={13} />Nuevo análisis
+          </button>
+        </div>
       </motion.div>
 
       {/* Riesgo global */}
@@ -598,6 +641,33 @@ function ResultadoView({ resultado, archivo, onReset }: { resultado: Resultado; 
         ))}
       </div>
 
+      {puedeIrAInforme && onVerInformeCompleto && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl text-left"
+          style={{
+            background: 'linear-gradient(135deg, rgba(29,78,216,0.12), rgba(79,70,229,0.08))',
+            border: '1px solid rgba(59,130,246,0.28)',
+          }}>
+          <p className="text-[10px] font-black text-sky-300/90 uppercase tracking-widest mb-1">Siguiente paso</p>
+          <p className="text-sm font-bold text-white mb-0.5">Generar informe jurídico estructurado</p>
+          <p className="text-xs text-slate-400 leading-relaxed mb-3">
+            {criticas} críticas, {altas} altas, {medias} medias, {conformes} conformes. {resultado.clausulasProblematicas} cláusula
+            {resultado.clausulasProblematicas === 1 ? '' : 's'} con observaciones. El texto del contrato se sincronizó con la pestaña de informe.
+          </p>
+          <button
+            type="button"
+            onClick={onVerInformeCompleto}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-white"
+            style={{ background: 'linear-gradient(135deg,#1d4ed8,#4f46e5)', boxShadow: '0 6px 20px rgba(37,99,235,0.3)' }}>
+            <FileDown size={14} />
+            Ir a informe completo
+            <ArrowRight size={14} />
+          </button>
+        </motion.div>
+      )}
+
       {/* Cláusulas */}
       <div>
         <p className="text-xs font-bold text-slate-400 mb-2">Análisis por cláusula</p>
@@ -627,6 +697,74 @@ function ResultadoView({ resultado, archivo, onReset }: { resultado: Resultado; 
   )
 }
 
+// ── Stepper de flujo (cargar → cláusulas → informe) ────────────────────────────
+function FlujoAnalisisStepper({
+  tabPrincipal,
+  tieneResultadoRapido,
+  analizando,
+}: {
+  tabPrincipal: 'analisis' | 'informe'
+  tieneResultadoRapido: boolean
+  analizando: boolean
+}) {
+  const pasoActivo: 1 | 2 | 3 =
+    tabPrincipal === 'informe' ? 3
+    : tieneResultadoRapido ? 2
+    : 1
+  const paso1Listo = tieneResultadoRapido
+  const paso2Listo = tieneResultadoRapido && tabPrincipal === 'informe'
+
+  const items: { n: 1 | 2 | 3; label: string; sub: string }[] = [
+    { n: 1, label: 'Cargar y análisis rápido', sub: analizando ? 'Procesando…' : 'PDF / Word / texto' },
+    { n: 2, label: 'Revisar cláusulas', sub: 'Riesgo y normativa' },
+    { n: 3, label: 'Informe jurídico', sub: 'IA + PDF o Word' },
+  ]
+
+  return (
+    <div
+      className="p-3 rounded-2xl"
+      style={{ background: 'rgba(15,23,42,0.55)', border: '1px solid rgba(255,255,255,0.07)' }}
+      aria-label="Progreso del módulo de análisis contractual">
+      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">Flujo de trabajo</p>
+      <div className="flex items-stretch gap-1 sm:gap-2">
+        {items.map((it, i) => {
+          const esActivo = pasoActivo === it.n
+          const listo = it.n === 1 ? paso1Listo : it.n === 2 ? paso2Listo : false
+          return (
+            <div key={it.n} className="flex-1 min-w-0 flex items-center gap-2">
+              {i > 0 && (
+                <div
+                  className="hidden sm:block w-2 flex-shrink-0 h-px mt-3"
+                  style={{ background: paso1Listo ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)' }}
+                  aria-hidden
+                />
+              )}
+              <div className="flex-1 min-w-0 flex items-start gap-2">
+                <div
+                  className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 text-[10px] font-black"
+                  style={esActivo
+                    ? { background: 'rgba(99,102,241,0.35)', color: '#e0e7ff', border: '1px solid rgba(129,140,248,0.45)', boxShadow: '0 0 0 1px rgba(99,102,241,0.2)' }
+                    : listo
+                      ? { background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.3)' }
+                      : { background: 'rgba(255,255,255,0.04)', color: '#64748b', border: '1px solid rgba(255,255,255,0.08)' }}
+                  aria-current={esActivo ? 'step' : undefined}>
+                  {listo && !esActivo ? <Check size={14} strokeWidth={2.5} /> : it.n}
+                </div>
+                <div className="min-w-0 pt-0.5">
+                  <p className={`text-[10px] font-bold leading-tight truncate ${esActivo ? 'text-indigo-200' : 'text-slate-400'}`}>
+                    {it.label}
+                  </p>
+                  <p className="text-[9px] text-slate-600 leading-tight truncate">{it.sub}</p>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── Vista carga ────────────────────────────────────────────────────────────────
 const STEPS_ANALISIS = [
   'Parseando estructura del documento...',
@@ -641,6 +779,7 @@ const STEPS_ANALISIS = [
 export default function Analysis() {
   const [tabPrincipal, setTabPrincipal] = useState<'analisis' | 'informe'>('analisis')
   const [archivo, setArchivo] = useState<File | null>(null)
+  const [textoExtraido, setTextoExtraido] = useState('')
   const [analizando, setAnalizando] = useState(false)
   const [progreso, setProgreso] = useState(0)
   const [paso, setPaso] = useState(0)
@@ -685,6 +824,7 @@ export default function Analysis() {
         setProgreso(Math.round(10 + ((i) / (STEPS_ANALISIS.length - 1)) * 90))
       }
 
+      setTextoExtraido(textoExtraido)
       const res = analizarTexto(textoExtraido, archivo.name)
       setResultado(res)
     } catch (err: unknown) {
@@ -697,13 +837,12 @@ export default function Analysis() {
 
   const reset = () => {
     setArchivo(null)
+    setTextoExtraido('')
     setResultado(null)
     setProgreso(0)
     setPaso(0)
     setError(null)
   }
-
-  if (resultado) return <ResultadoView resultado={resultado} archivo={archivo?.name ?? ''} onReset={reset} />
 
   return (
     <div className="space-y-4">
@@ -712,20 +851,42 @@ export default function Analysis() {
           <Brain size={18} className="text-indigo-400" />
           <h1 className="text-xl font-black text-white">Análisis Contractual</h1>
         </div>
-        <p className="text-xs text-slate-500 mt-0.5">IA jurídica · Legislación chilena · Cláusulas abusivas + Informe descargable Word</p>
+        <p className="text-xs text-slate-500 mt-0.5">IA jurídica · Legislación chilena · Cláusulas abusivas + Informe en PDF o Word (logo LEXARA)</p>
       </motion.div>
 
-      {/* Tabs principales */}
-      <div className="flex gap-1 p-1 rounded-2xl" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <button onClick={() => setTabPrincipal('analisis')}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
+      <FlujoAnalisisStepper
+        tabPrincipal={tabPrincipal}
+        tieneResultadoRapido={!!resultado}
+        analizando={analizando}
+      />
+
+      {/* Tabs principales (siempre visibles: el análisis rápido ya no reemplaza toda la pantalla) */}
+      <div
+        role="tablist"
+        aria-label="Análisis rápido o informe jurídico"
+        className="flex gap-1 p-1 rounded-2xl"
+        style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <button
+          type="button"
+          role="tab"
+          id="tab-analisis-rapido"
+          aria-selected={tabPrincipal === 'analisis'}
+          aria-controls="panel-analisis-rapido"
+          onClick={() => setTabPrincipal('analisis')}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50"
           style={tabPrincipal === 'analisis'
             ? { background: 'linear-gradient(135deg,rgba(79,70,229,0.3),rgba(124,58,237,0.3))', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }
             : { color: '#64748b' }}>
           <Zap size={12} />Análisis Rápido de Cláusulas
         </button>
-        <button onClick={() => setTabPrincipal('informe')}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
+        <button
+          type="button"
+          role="tab"
+          id="tab-informe-juridico"
+          aria-selected={tabPrincipal === 'informe'}
+          aria-controls="panel-informe-juridico"
+          onClick={() => setTabPrincipal('informe')}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all outline-none focus-visible:ring-2 focus-visible:ring-sky-400/45"
           style={tabPrincipal === 'informe'
             ? { background: 'linear-gradient(135deg,rgba(29,78,216,0.3),rgba(79,70,229,0.25))', color: '#93c5fd', border: '1px solid rgba(29,78,216,0.35)' }
             : { color: '#64748b' }}>
@@ -740,15 +901,45 @@ export default function Analysis() {
         </button>
       </div>
 
-      {/* Tab Informe Jurídico */}
-      {tabPrincipal === 'informe' && (
-        <div className="p-4 rounded-2xl" style={{ background: 'rgba(10,18,35,0.9)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <InformeLegal />
-        </div>
+      {tabPrincipal === 'informe' && textoExtraido.length >= 40 && (
+        <p className="text-[10px] text-slate-500 px-0.5">
+          El texto del último documento analizado se cargó en el informe. Puedes editarlo o pegar otro contrato.
+        </p>
       )}
 
-      {/* Tab Análisis original — solo se muestra cuando tabPrincipal === 'analisis' */}
-      {tabPrincipal === 'analisis' && (<>
+      {/* Informe: permanece montado (display) para no perder borrador al cambiar de pestaña */}
+      <div
+        id="panel-informe-juridico"
+        role="tabpanel"
+        aria-labelledby="tab-informe-juridico"
+        hidden={tabPrincipal !== 'informe'}
+        className="p-4 rounded-2xl"
+        style={{
+          display: tabPrincipal === 'informe' ? 'block' : 'none',
+          background: 'rgba(10,18,35,0.9)',
+          border: '1px solid rgba(255,255,255,0.06)',
+        }}>
+        <InformeLegal initialTexto={textoExtraido} />
+      </div>
+
+      {/* Tab Análisis — resultado o carga */}
+      <div
+        id="panel-analisis-rapido"
+        role="tabpanel"
+        aria-labelledby="tab-analisis-rapido"
+        hidden={tabPrincipal !== 'analisis'}
+        style={{ display: tabPrincipal === 'analisis' ? 'block' : 'none' }}
+        className="space-y-4"
+      >
+      {resultado ? (
+        <ResultadoView
+          resultado={resultado}
+          archivo={archivo?.name ?? ''}
+          onReset={reset}
+          puedeIrAInforme={textoExtraido.length >= 40}
+          onVerInformeCompleto={() => setTabPrincipal('informe')}
+        />
+      ) : (<>
 
       {/* Capacidades */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -850,7 +1041,9 @@ export default function Analysis() {
           </motion.div>
         )}
       </AnimatePresence>
-      </>)}
+      </>
+    )}
+      </div>
     </div>
   )
 }

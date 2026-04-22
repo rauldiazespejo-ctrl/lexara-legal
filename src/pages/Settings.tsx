@@ -376,7 +376,7 @@ export default function Settings() {
 
       <div className="text-center py-2">
         <p className="text-[10px] text-slate-700">LEXARA PRO v1.0.0 · Plataforma Legal Chile · 2026</p>
-        <p className="text-[9px] text-slate-800 mt-0.5">Arquitectura y desarrollo por NexusForge</p>
+        <p className="text-[9px] text-slate-800 mt-0.5">Motor de IA y desarrollo por PulsoAI</p>
       </div>
 
       <button

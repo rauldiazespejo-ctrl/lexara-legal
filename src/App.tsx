@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider } from './context/AppDataContext'
 import { UfProvider } from './context/UfContext'
 import Header from './components/Header'
+import { LegalAcceptanceGate, isLegalAcceptanceValid, setLegalAcceptance } from './components/LegalAcceptanceGate'
+import { PulsoBackgroundLayer } from './components/PulsoBackgroundLayer'
 import { Sidebar, BottomNav } from './components/Sidebar'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -44,7 +47,12 @@ function AppShell() {
   return (
     <BrowserRouter basename={routerBasename()}>
       <UfProvider>
-      <div className="min-h-screen" style={{ background: 'radial-gradient(ellipse at top left,#0d1b3e 0%,#06090e 55%)' }}>
+      <div
+        className="min-h-screen relative overflow-x-hidden"
+        style={{ background: 'radial-gradient(ellipse at top left,#0d1b3e 0%,#06090e 55%)' }}
+      >
+        <PulsoBackgroundLayer intensity={0.85} />
+        <div className="relative z-10 min-h-screen">
         <Header />
         <Sidebar />
         <main className="pt-14 pb-20 lg:pb-0 lg:ml-60 min-h-screen">
@@ -80,17 +88,33 @@ function AppShell() {
           </div>
         </main>
         <BottomNav />
+        </div>
       </div>
       </UfProvider>
     </BrowserRouter>
   )
 }
 
+function AppWithLegalGate() {
+  const [legalOk, setLegalOk] = useState(() => isLegalAcceptanceValid())
+  if (!legalOk) {
+    return (
+      <LegalAcceptanceGate
+        onAccept={() => {
+          setLegalAcceptance()
+          setLegalOk(true)
+        }}
+      />
+    )
+  }
+  return <AppShell />
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <AppDataProvider>
-        <AppShell />
+        <AppWithLegalGate />
       </AppDataProvider>
     </AuthProvider>
   )

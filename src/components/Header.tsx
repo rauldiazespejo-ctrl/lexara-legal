@@ -73,7 +73,9 @@ export default function Header() {
               style={{ background: 'linear-gradient(95deg,#60a5fa 0%,#1d4ed8 50%,#60a5fa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200%', animation: 'shimmer 4s linear infinite' }}>
               LEXARA PRO
             </span>
-            <span className="text-[8px] text-slate-600 font-semibold tracking-[0.15em] uppercase hidden sm:block">by NexusForge</span>
+            <span className="text-[8px] text-slate-500 font-semibold tracking-[0.12em] uppercase hidden sm:block">
+              IA <span className="text-cyan-500/90">PulsoAI</span>
+            </span>
           </div>
         </Link>
 

@@ -109,8 +109,8 @@ export function Sidebar() {
 
   const plazosUrgentes = plazos.filter(p => p.alerta === 'critical' || p.alerta === 'high').length
 
-  const initials = user?.avatar ?? 'NF'
-  const displayName = user?.nombre ?? 'NexusForge'
+  const initials = user?.avatar ?? 'LX'
+  const displayName = user?.nombre ?? 'LEXARA'
   const roleLabel = isSuperAdmin ? 'Super Admin' : (user?.rol ?? 'Abogado')
 
   return (
@@ -126,28 +126,51 @@ export function Sidebar() {
       <div className="absolute top-0 left-0 right-0 h-32 pointer-events-none"
         style={{ background: 'radial-gradient(ellipse at 50% -20%,rgba(99,102,241,0.12),transparent 70%)' }} />
 
-      {/* Profile card */}
-      <div className="p-3 m-3 mt-4 rounded-2xl relative overflow-hidden"
-        style={{ background: 'rgba(29,78,216,0.07)', border: '1px solid rgba(99,102,241,0.15)' }}>
-        <div className="absolute inset-0 opacity-30"
-          style={{ background: 'radial-gradient(circle at 80% 20%,rgba(99,102,241,0.3),transparent 60%)' }} />
-        <div className="relative flex items-center gap-2.5">
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-              style={{ background: isSuperAdmin ? 'linear-gradient(135deg,#4f46e5,#7c3aed)' : 'linear-gradient(135deg,#1d4ed8,#7c3aed)', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>
+      {/* Profile card — sin overflow-hidden en el contenedor del texto (cortaba descendentes/acentos) */}
+      <div
+        className="p-3 m-3 mt-4 rounded-2xl relative"
+        style={{ background: 'rgba(29,78,216,0.07)', border: '1px solid rgba(99,102,241,0.15)' }}
+      >
+        <div
+          className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none"
+          aria-hidden
+        >
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{ background: 'radial-gradient(circle at 80% 20%,rgba(99,102,241,0.3),transparent 60%)' }}
+          />
+        </div>
+        <div className="relative z-[1] flex items-center gap-2.5 py-0.5">
+          <div className="relative flex-shrink-0 self-center">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white"
+              style={{
+                background: isSuperAdmin ? 'linear-gradient(135deg,#4f46e5,#7c3aed)' : 'linear-gradient(135deg,#1d4ed8,#7c3aed)',
+                boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+              }}
+            >
               {initials}
             </div>
             {isSuperAdmin && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center"
-                style={{ background: '#fbbf24', border: '2px solid #050814' }}>
+              <div
+                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                style={{ background: '#fbbf24', border: '2px solid #050814' }}
+              >
                 <Zap size={7} className="text-slate-900" />
               </div>
             )}
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-white truncate">{displayName.split(' ').slice(0, 2).join(' ')}</p>
-            <p className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full inline-block capitalize"
-              style={{ background: isSuperAdmin ? 'rgba(251,191,36,0.1)' : 'rgba(99,102,241,0.15)', color: isSuperAdmin ? '#fbbf24' : '#a5b4fc' }}>
+          <div className="min-w-0 flex-1 flex flex-col justify-center gap-1 pr-0.5">
+            <p className="text-xs font-bold text-white truncate leading-tight" title={displayName.split(' ').slice(0, 2).join(' ')}>
+              {displayName.split(' ').slice(0, 2).join(' ')}
+            </p>
+            <p
+              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full w-fit max-w-full truncate capitalize"
+              style={{
+                background: isSuperAdmin ? 'rgba(251,191,36,0.1)' : 'rgba(99,102,241,0.15)',
+                color: isSuperAdmin ? '#fbbf24' : '#a5b4fc',
+              }}
+            >
               {roleLabel}
             </p>
           </div>
@@ -197,7 +220,7 @@ export function Sidebar() {
         <div className="mt-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(29,78,216,0.05)', border: '1px solid rgba(29,78,216,0.12)' }}>
           <p className="text-[9px] text-slate-700 font-semibold leading-relaxed">
             LEXARA PRO · <span className="text-blue-600">Derecho Chileno</span><br />
-            <span className="text-slate-800">Desarrollado por NexusForge</span>
+            <span className="text-slate-800">IA y desarrollo · <span className="text-cyan-600/90">PulsoAI</span></span>
           </p>
         </div>
       </div>
@@ -268,7 +291,7 @@ export function BottomNav() {
               <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                 <div>
                   <p className="text-sm font-black text-white">Todos los módulos</p>
-                  <p className="text-[9px] text-slate-600">LEXARA PRO · NexusForge</p>
+                  <p className="text-[9px] text-slate-600">LEXARA PRO · <span className="text-cyan-600/80">PulsoAI</span></p>
                 </div>
                 <button onClick={() => setMasOpen(false)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
                   <X size={16} className="text-slate-400" />

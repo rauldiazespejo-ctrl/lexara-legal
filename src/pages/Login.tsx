@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { PulsoBackgroundLayer } from '../components/PulsoBackgroundLayer'
 
 function FloatingParticle({ x, y, delay }: { x: number; y: number; delay: number }) {
   return (
@@ -78,11 +79,14 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden relative"
-      style={{ background: 'radial-gradient(ellipse at 30% 20%,#0d1b3e 0%,#050810 60%)' }}>
+    <div
+      className="min-h-screen flex items-center justify-center p-4 overflow-hidden relative"
+      style={{ background: 'radial-gradient(ellipse at 30% 20%,#0b1228 0%,#050810 60%)' }}
+    >
+      <PulsoBackgroundLayer intensity={1.1} />
 
-      {/* Animated background */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Animated background (partículas + malla base) */}
+      <div className="absolute inset-0 pointer-events-none z-[1]">
         <div className="absolute inset-0"
           style={{ background: 'radial-gradient(circle at 20% 50%,rgba(29,78,216,0.08) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(124,58,237,0.06) 0%,transparent 50%)' }} />
         {/* Grid */}
@@ -100,6 +104,17 @@ export default function Login() {
           style={{ background: 'radial-gradient(circle,#4f46e5,transparent)' }} />
         <div className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full blur-3xl opacity-10"
           style={{ background: 'radial-gradient(circle,#7c3aed,transparent)' }} />
+        <motion.div
+          className="absolute left-1/2 top-1/2 w-[min(100vmin,480px)] h-[min(100vmin,480px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-500/5"
+          animate={{ scale: [1, 1.03, 1], opacity: [0.15, 0.3, 0.15] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute left-1/2 top-1/2 w-[min(80vmin,380px)] h-[min(80vmin,380px)] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.04), transparent 70%)' }}
+          animate={{ scale: [0.95, 1, 0.95] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+        />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
@@ -121,7 +136,7 @@ export default function Login() {
               LEXARA
             </h1>
             <p className="text-xs text-slate-500 tracking-widest uppercase font-semibold">Legal Intelligence Platform</p>
-            <p className="text-[10px] text-slate-700 mt-1 tracking-wide">Derecho Chileno · Suite Profesional</p>
+            <p className="text-[10px] text-slate-500 mt-1.5 tracking-wide">IA desarrollada por <span className="text-cyan-400/90 font-bold">PulsoAI</span> · Derecho chileno</p>
           </motion.div>
         </div>
 
@@ -222,9 +237,11 @@ export default function Login() {
           </form>
         </motion.div>
 
-        <p className="text-center text-[9px] text-slate-800 mt-6 tracking-wider">
-          LEXARA Legal Intelligence v2.0 · Datos protegidos · Chile
+        <p className="text-center text-[9px] text-slate-600 mt-6 tracking-wider max-w-sm mx-auto leading-relaxed">
+          LEXARA PRO v2.0 · Plataforma de productividad legal · Cumplimiento y datos conforme a la legislación chilena (Ley 19.628 y normas
+          conexas)
         </p>
+        <p className="text-center text-[8px] text-slate-700/90 mt-2">Motor IA y desarrollo: PulsoAI</p>
       </motion.div>
 
       <style>{`
